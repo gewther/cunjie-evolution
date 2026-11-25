@@ -25,6 +25,8 @@ if(injectStart<0||legacyStart<0||paintStart<0)throw new Error('Cannot locate leg
 const tagLine=host.slice(legacyStart,paintStart).split(String.fromCharCode(10)).find(line=>line.includes('const tag='));
 if(!tagLine)throw new Error('Original custom-motion tag line missing');
 const inject=host.slice(injectStart,legacyStart);
+const bridgeCode="if(typeof window.__installFenrirScene===\"function\"&&typeof fenrirCity!==\"undefined\"&&fenrirCity){sprite_scaled=window.__installFenrirScene({spriteScaled:sprite_scaled,textures:textures,newTexture:new_texture,w:w,h:h,getPawX:()=>paw_x});}";
+const bridgeLine="   const bridge="+JSON.stringify(bridgeCode)+";";
 const lines=[
  "function legacySource(kind,motionAtlas='',isFenrir=false){",
  " if(kind==='free'&&motionAtlas){",
@@ -32,7 +34,7 @@ const lines=[
  "  let source=DATA.freeLegacy.includes('<head>')?DATA.freeLegacy.replace('<head>','<head>'+tag):DATA.freeLegacy;",
  "  if(isFenrir){",
  "   const anchor='ptime = performance.now();\\nmainloop();';",
- "   const bridge='if(typeof window.__installFenrirScene==="function"&&typeof fenrirCity!=="undefined"&&fenrirCity){sprite_scaled=window.__installFenrirScene({spriteScaled:sprite_scaled,textures:textures,newTexture:new_texture,w:w,h:h,getPawX:()=>paw_x});}';",
+ bridgeLine,
  "   if(source.split(anchor).length===2){",
  "    source=source.replace(anchor,bridge+String.fromCharCode(10)+anchor);",
  "    source=source.replace('<head>','<head><script src="scripts/fenrir-scene-v1.js"></script>');",
