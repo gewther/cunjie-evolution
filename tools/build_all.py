@@ -18,6 +18,7 @@ BUILD_STEPS = [
     ("Ground residue v3 module", ["node", "tools/build_residue.cjs"]),
     ("Free Mode & Fenrir wet-asphalt impact v6", ["node", "tools/build_free_impact.cjs"]),
     ("Fenrir Blue-Hour Hunt gameplay", ["node", "tools/build_fenrir.cjs"]),
+    ("Fenrir city-scale scene layers", ["node", "tools/build_fenrir_scene.cjs"]),
     ("Wave 1 Immersion (ambience, haptics, camera, lens FX)", ["node", "tools/build_immersion.cjs"]),
     ("Unified HD & custom skin pack runtime", ["node", "tools/build_skin_runtime.cjs"]),
     ("Standalone offline single-file HTML", [sys.executable, "tools/build_offline_html.py"]),
@@ -28,6 +29,7 @@ TEST_STEPS = [
     ("Impact pass tests", ["node", "tools/test_impact.cjs"]),
     ("Touch vertical tests", ["node", "tools/test_touch.cjs"]),
     ("Direct touch tests", ["node", "tools/test_direct.cjs"]),
+    ("Fenrir city scene tests", ["node", "tools/test_fenrir_scene.cjs"]),
 ]
 
 CHECK_SCRIPTS = [
@@ -37,6 +39,7 @@ CHECK_SCRIPTS = [
     "dist/scripts/touch-v1-impact-host-1.js",
     "dist/scripts/host-2.js",
     "dist/scripts/impact-host-3.js",
+    "dist/scripts/fenrir-scene-v1.js",
     "dist/data/touch-v1-impact.js",
     "dist/data/touch-v1-free.js",
 ]
@@ -75,6 +78,10 @@ RELEASE_FILES = [
     "assets/impact/impact-atlas-v1.png",
     "assets/fenrir/fenrir-city-blue-hour.webp",
     "assets/fenrir/fenrir-motion-v3.png",
+    "scripts/fenrir-scene-v1.js",
+    "assets/fenrir/city-far.svg",
+    "assets/fenrir/city-mid.svg",
+    "assets/fenrir/city-near.svg",
 ] + [f"assets/aj6-hd/{i}.webp" for i in range(11)]
 
 START_PY = '''"""Run the clean Cunjie v6.0 static release on localhost."""
