@@ -2,7 +2,7 @@
 const fs=require('fs');
 const path=require('path');
 const vm=require('vm');
-const root=path.resolve(__dirname,'..');
+const root=process.env.CUNJIE_ROOT?path.resolve(process.env.CUNJIE_ROOT):path.resolve(__dirname,'..');
 const dist=path.join(root,'dist');
 const src=path.join(root,'src','fenrir-scene-v1.js');
 const hostPath=path.join(dist,'scripts','impact-host-3.js');
