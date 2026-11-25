@@ -19,14 +19,14 @@ assert(scene.includes('reduceMotion'),'scene must respect reduced-motion prefere
 
 for(const name of ['city-far.svg','city-mid.svg','city-near.svg']){
  const svg=fs.readFileSync(path.join(game,'assets','fenrir',name),'utf8');
- assert(/<svg[^>]*width="1200"[^>]*height="240"[^>]*viewBox="0 0 1200 240"/.test(svg),name+' must be a 1200x240 wide scene layer');
+ assert(/<svg[^>]*width="2400"[^>]*height="240"[^>]*viewBox="0 0 2400 240"/.test(svg),name+' must be a 2400x240 (150 m at 16 px/m) scene layer');
  assert(svg.includes('</svg>'),name+' must close its SVG root');
 }
 
 const nearSvgForGround=fs.readFileSync(path.join(game,'assets','fenrir','city-near.svg'),'utf8');
 assert(nearSvgForGround.trim().startsWith('<svg '),'near layer must begin with a valid SVG root');
 assert(nearSvgForGround.trim().endsWith('</svg>'),'near layer must end with a valid SVG root');
-assert(nearSvgForGround.includes('M0 194H1200V240H0Z'),'road surface must remain in the near foreground layer');
+assert(nearSvgForGround.includes('M0 194H2400V240H0Z'),'road surface must span the complete 150 m near foreground layer');
 assert(nearSvgForGround.includes('M20 228h42'),'road markings must align with Fenrir floor_y=228');
 
 function testBuildIntegration(){
@@ -83,7 +83,7 @@ async function main(){
  const sandbox=makeSandbox(FakeImage);
  vm.runInNewContext(scene,sandbox,{filename:'fenrir-scene-v1.js'});
  assert.equal(typeof sandbox.window.__installFenrirScene,'function');
- let pawX=300;
+ let pawX=200;
  const original=function(spr,x,y,w,h){calls.push({spr,x,y,w,h});};
  const wrapped=sandbox.window.__installFenrirScene({
   spriteScaled:original,textures,newTexture:image=>({image,smooth:false}),
@@ -97,20 +97,28 @@ async function main(){
  assert([...textures.values()].every(t=>t.smooth===true),'all city textures should use smooth sampling');
 
  wrapped(['fenrirCity',0,0,400,240],0,0,400,240); // prime the frame clock
+ for(let i=0;i<12;i++)wrapped(['fenrirCity',0,0,400,240],0,0,400,240);
+ assert.equal(sandbox.window.__fenrirCitySceneV1Status.worldWidth,2400,'camera world width must equal 150 m at 16 px/m');
+ assert.equal(sandbox.window.__fenrirCitySceneV1Status.maxScroll,2000,'400 px viewport must scroll across the 2400 px world');
+ assert(Math.abs(sandbox.window.__fenrirCitySceneV1Status.cameraX-1000)<1,'camera must hold position while the paw stays inside the dead zone');
+
+ pawX=300;
+ for(let i=0;i<60;i++)wrapped(['fenrirCity',0,0,400,240],0,0,400,240);
  calls.length=0;
  wrapped(['fenrirCity',0,0,400,240],0,0,400,240);
  assert.equal(calls.length,3,'Fenrir backdrop should expand into three parallax draws');
  assert.deepEqual(calls.map(c=>c.spr[0]),['fenrirCityFarV1','fenrirCityMidV1','fenrirCityNearV1']);
  const sourceXs=calls.map(c=>c.spr[1]);
  assert(sourceXs[0]<sourceXs[1]&&sourceXs[1]<sourceXs[2],'near layers must move farther than mid and far layers');
- assert(sandbox.window.__fenrirCitySceneV1Status.cameraX>400,'camera should follow the paw position');
+ assert(sandbox.window.__fenrirCitySceneV1Status.cameraX>1000,'camera should follow the paw after it leaves the dead zone');
+ assert(sandbox.window.__fenrirCitySceneV1Status.targetX>1000,'camera target should include paw position and movement lead');
  assert.equal(sourceXs[2],Math.round(sandbox.window.__fenrirCitySceneV1Status.cameraX),'foreground road and props must track the ground plane at 1.0x');
  calls.length=0;
 
  sandbox.window.__xlImmersionPrefs.reduceMotion=true;
  pawX=400;
  for(let i=0;i<120;i++)wrapped(['fenrirCity',0,0,400,240],0,0,400,240);
- assert(Math.abs(sandbox.window.__fenrirCitySceneV1Status.cameraX-400)<1,'reduced motion should return camera to a steady centered view');
+ assert(Math.abs(sandbox.window.__fenrirCitySceneV1Status.cameraX-1000)<1,'reduced motion should return camera to a steady centered view');
 
  calls.length=0;
  wrapped(['unrelatedBackground',0,0,400,240],0,0,400,240);
