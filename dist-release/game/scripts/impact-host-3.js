@@ -175,7 +175,7 @@ function legacySource(kind,motionAtlas='',isFenrir=false){
   const tag=`<script>window.__cunjieCustomMotion=${JSON.stringify(motionAtlas)};window.__cunjieFenrirCity=${Boolean(isFenrir)};<\/script>`.replace('<\\/','</');
   let source=DATA.freeLegacy.includes('<head>')?DATA.freeLegacy.replace('<head>','<head>'+tag):DATA.freeLegacy;
   if(isFenrir){
-   const anchor=String.raw`ptime = performance.now();\nmainloop();`;
+   const anchor='ptime = performance.now();\nmainloop();';
    const bridge='if(typeof window.__installFenrirScene==="function"&&typeof fenrirCity!=="undefined"&&fenrirCity){sprite_scaled=window.__installFenrirScene({spriteScaled:sprite_scaled,textures:textures,newTexture:new_texture,w:w,h:h,getPawX:()=>paw_x});}';
    if(source.split(anchor).length!==2)throw new Error('Fenrir scene bridge anchor missing or ambiguous');
    source=source.replace(anchor,bridge+'\n'+anchor);
