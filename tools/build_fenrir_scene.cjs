@@ -22,7 +22,7 @@ const injectStart=host.indexOf('function injectHttpBase');
 const legacyStart=host.indexOf('function legacySource',injectStart);
 const paintStart=host.indexOf('function paintShoePreviews',legacyStart);
 if(injectStart<0||legacyStart<0||paintStart<0)throw new Error('Cannot locate legacySource in impact-host-3.js');
-const tagLine=host.slice(legacyStart,paintStart).split('\\n').find(line=>line.includes('const tag='));
+const tagLine=host.slice(legacyStart,paintStart).split(String.fromCharCode(10)).find(line=>line.includes('const tag='));
 if(!tagLine)throw new Error('Original custom-motion tag line missing');
 const inject=host.slice(injectStart,legacyStart);
 const lines=[
@@ -34,7 +34,7 @@ const lines=[
  "   const anchor=String.raw`ptime = performance.now();\\nmainloop();`;",
  "   const bridge='if(typeof window.__installFenrirScene==="function"&&typeof fenrirCity!=="undefined"&&fenrirCity){sprite_scaled=window.__installFenrirScene({spriteScaled:sprite_scaled,textures:textures,newTexture:new_texture,w:w,h:h,getPawX:()=>paw_x});}';",
  "   if(source.split(anchor).length!==2)throw new Error('Fenrir scene bridge anchor missing or ambiguous');",
- "   source=source.replace(anchor,bridge+'\\n'+anchor);",
+ "   source=source.replace(anchor,bridge+String.fromCharCode(10)+anchor);",
  "   source=source.replace('<head>','<head><script src="scripts/fenrir-scene-v1.js"></script>');",
  "  }",
  "  return injectHttpBase(source);",
@@ -44,7 +44,7 @@ const lines=[
  "}",
  ""
 ];
-host=host.slice(0,injectStart)+inject+lines.join('\\n')+host.slice(paintStart);
+host=host.slice(0,injectStart)+inject+lines.join(String.fromCharCode(10))+host.slice(paintStart);
 fs.writeFileSync(hostPath,host,'utf8');
 new vm.Script(host,{filename:'impact-host-3.js'});
 console.log('Fenrir city scale scene adapter, three SVG layers, and runtime bridge built.');
