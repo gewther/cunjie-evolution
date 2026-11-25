@@ -8,7 +8,7 @@
  const SPECS=[
   {key:'fenrirCityFarV1',url:'assets/fenrir/city-far.svg',parallax:.12},
   {key:'fenrirCityMidV1',url:'assets/fenrir/city-mid.svg',parallax:.36},
-  {key:'fenrirCityNearV1',url:'assets/fenrir/city-near.svg',parallax:.82}
+  {key:'fenrirCityNearV1',url:'assets/fenrir/city-near.svg',parallax:1.0}
  ];
  global.__installFenrirScene=function(context){
   if(!context||typeof context.spriteScaled!=='function'||!(context.textures instanceof Map)||typeof context.newTexture!=='function')return context&&context.spriteScaled;
