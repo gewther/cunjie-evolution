@@ -13,6 +13,7 @@ on:
       - "src/fenrir-controls.js"
       - "assets/fenrir/*.svg"
       - "dist-release/game/scripts/impact-host-3.js"
+      - "dist-release/game/scripts/touch-v1-impact-host-1.js"
       - "dist-release/game/scripts/fenrir-scene-v1.js"
       - "dist-release/game/assets/fenrir/*.svg"
       - "dist-release/game/data/touch-v1-*.js"
