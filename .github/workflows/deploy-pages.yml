@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   build:
+    if: ${{ vars.ALLOW_PUBLIC_GITHUB_PAGES == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,6 +30,7 @@ jobs:
           path: dist-release/game
 
   deploy:
+    if: ${{ vars.ALLOW_PUBLIC_GITHUB_PAGES == 'true' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
