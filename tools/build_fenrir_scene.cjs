@@ -37,7 +37,7 @@ const lines=[
  bridgeLine,
  "   if(source.split(anchor).length===2){",
  "    source=source.replace(anchor,bridge+String.fromCharCode(10)+anchor);",
- "    source=source.replace('<head>','<head><script src="scripts/fenrir-scene-v1.js"></script>');",
+ "    source=source.replace('<head>','<head><script src=scripts/fenrir-scene-v1.js></script>');",
  "   }else if(typeof console!=='undefined'&&console.warn){console.warn('[Fenrir scene] Bridge anchor missing; original backdrop retained.');}",
  "  }",
  "  return injectHttpBase(source);",
