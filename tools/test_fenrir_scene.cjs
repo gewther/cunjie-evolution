@@ -23,6 +23,12 @@ for(const name of ['city-far.svg','city-mid.svg','city-near.svg']){
  assert(svg.includes('</svg>'),name+' must close its SVG root');
 }
 
+const nearSvgForGround=fs.readFileSync(path.join(game,'assets','fenrir','city-near.svg'),'utf8');
+assert(nearSvgForGround.trim().startsWith('<svg '),'near layer must begin with a valid SVG root');
+assert(nearSvgForGround.trim().endsWith('</svg>'),'near layer must end with a valid SVG root');
+assert(nearSvgForGround.includes('M0 194H1200V240H0Z'),'road surface must remain in the near foreground layer');
+assert(nearSvgForGround.includes('M20 228h42'),'road markings must align with Fenrir floor_y=228');
+
 function testBuildIntegration(){
  const fixture=fs.mkdtempSync(path.join(os.tmpdir(),'cunjie-fenrir-build-'));
  try{
@@ -98,6 +104,7 @@ async function main(){
  const sourceXs=calls.map(c=>c.spr[1]);
  assert(sourceXs[0]<sourceXs[1]&&sourceXs[1]<sourceXs[2],'near layers must move farther than mid and far layers');
  assert(sandbox.window.__fenrirCitySceneV1Status.cameraX>400,'camera should follow the paw position');
+ assert.equal(sourceXs[2],Math.round(sandbox.window.__fenrirCitySceneV1Status.cameraX),'foreground road and props must track the ground plane at 1.0x');
  calls.length=0;
 
  sandbox.window.__xlImmersionPrefs.reduceMotion=true;
