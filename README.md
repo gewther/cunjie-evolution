@@ -12,3 +12,5 @@
 - `src/`：玩法、手感、接地视觉、皮肤运行时与芬里尔模块源码
 - `tools/`：构建、打包与自动化回归测试脚本
 - `dist-release/game/`：精简网页发布版（GitHub Pages 部署目录）
+
+> **部署安全**：GitHub Pages 是公开站点。工作流默认跳过部署；只有仓库变量 `ALLOW_PUBLIC_GITHUB_PAGES=true` 时才允许发布。不要把它当作私密站点托管方案。
