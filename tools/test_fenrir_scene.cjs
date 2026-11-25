@@ -34,9 +34,9 @@ function makeSandbox(ImageClass){
 function nextTurn(){return new Promise(resolve=>setImmediate(resolve));}
 
 async function main(){
- const textures=new Map(),calls=[];
+ const textures=new Map(),calls=[],imageUrls=[];
  class FakeImage{
-  set src(value){this._src=value;this.complete=true;this.naturalWidth=1200;this.naturalHeight=240;queueMicrotask(()=>this.onload&&this.onload());}
+  set src(value){this._src=value;imageUrls.push(value);this.complete=true;this.naturalWidth=1200;this.naturalHeight=240;queueMicrotask(()=>this.onload&&this.onload());}
   get src(){return this._src;}
  }
  const sandbox=makeSandbox(FakeImage);
@@ -52,6 +52,7 @@ async function main(){
  await nextTurn();
  assert.equal(sandbox.window.__fenrirCitySceneV1Status.ready,true,'all three scene layers should load');
  assert.equal(textures.size,3,'all three scene textures should be cached');
+ assert.deepEqual(imageUrls.sort(),['https://example.test/cunjie-evolution/assets/fenrir/city-far.svg','https://example.test/cunjie-evolution/assets/fenrir/city-mid.svg','https://example.test/cunjie-evolution/assets/fenrir/city-near.svg'].sort(),'scene URLs must resolve correctly under a GitHub Pages subpath');
  assert([...textures.values()].every(t=>t.smooth===true),'all city textures should use smooth sampling');
 
  wrapped(['fenrirCity',0,0,400,240],0,0,400,240); // prime the frame clock
