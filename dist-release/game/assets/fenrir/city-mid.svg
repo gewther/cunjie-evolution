@@ -1,49 +1,55 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="240" viewBox="0 0 1200 240">
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="240" viewBox="0 0 2400 240">
 <defs>
  <linearGradient id="glass" x2="0" y2="1"><stop stop-color="#35576a"/><stop offset="1" stop-color="#172d3d"/></linearGradient>
  <linearGradient id="shop" x2="0" y2="1"><stop stop-color="#263f50"/><stop offset="1" stop-color="#101f2c"/></linearGradient>
  <pattern id="office" width="26" height="31" patternUnits="userSpaceOnUse"><rect x="4" y="5" width="15" height="18" rx="1" fill="#8dc5d7" opacity=".25"/><path d="M0 27H26" stroke="#9bb7c3" stroke-opacity=".15"/></pattern>
  <pattern id="warmwin" width="34" height="29" patternUnits="userSpaceOnUse"><rect x="5" y="5" width="18" height="15" fill="#e9c78a" opacity=".5"/></pattern>
 </defs>
-<!-- three-storey commercial block: approximately 3 x 3.2 m -->
+<!-- District A: office blocks, shops and a tower; 16 px per metre reference -->
 <g>
- <path d="M12 197V52H236V197Z" fill="url(#glass)" stroke="#7695a4" stroke-opacity=".35"/>
- <path d="M12 52H236V197H12Z" fill="url(#office)"/>
- <path d="M12 103H236M12 154H236" stroke="#91b4c2" stroke-opacity=".35" stroke-width="2"/>
- <path d="M12 178H236V197H12Z" fill="#101e2a"/>
- <path d="M27 181H220V194H27Z" fill="#294758"/>
- <g fill="#e7bd77" opacity=".55"><rect x="33" y="183" width="16" height="8"/><rect x="59" y="183" width="16" height="8"/><rect x="85" y="183" width="16" height="8"/></g>
+ <path d="M12 197V52H236V197Z" fill="url(#glass)" stroke="#7695a4" stroke-opacity=".35"/><path d="M12 52H236V197H12Z" fill="url(#office)"/>
+ <path d="M12 103H236M12 154H236" stroke="#91b4c2" stroke-opacity=".35" stroke-width="2"/><path d="M12 178H236V197H12Z" fill="#101e2a"/>
+ <path d="M27 181H220V194H27Z" fill="#294758"/><g fill="#e7bd77" opacity=".55"><rect x="33" y="183" width="16" height="8"/><rect x="59" y="183" width="16" height="8"/><rect x="85" y="183" width="16" height="8"/></g>
 </g>
-<!-- glass office tower -->
 <g>
- <path d="M270 197V5H422V197Z" fill="url(#glass)" stroke="#8bb3c4" stroke-opacity=".3"/>
- <path d="M270 5H422V197H270Z" fill="url(#office)"/>
- <path d="M270 55H422M270 105H422M270 155H422" stroke="#a6c7d4" stroke-opacity=".26" stroke-width="2"/>
- <path d="M288 5V197M340 5V197M392 5V197" stroke="#a6c7d4" stroke-opacity=".18"/>
- <path d="M270 178H422V197H270Z" fill="#10202e"/>
+ <path d="M270 197V5H422V197Z" fill="url(#glass)" stroke="#8bb3c4" stroke-opacity=".3"/><path d="M270 5H422V197H270Z" fill="url(#office)"/>
+ <path d="M270 55H422M270 105H422M270 155H422" stroke="#a6c7d4" stroke-opacity=".26" stroke-width="2"/><path d="M288 5V197M340 5V197M392 5V197" stroke="#a6c7d4" stroke-opacity=".18"/><path d="M270 178H422V197H270Z" fill="#10202e"/>
 </g>
-<!-- low retail street -->
 <g>
- <path d="M455 197V76H650V197Z" fill="url(#shop)" stroke="#8199a5" stroke-opacity=".35"/>
- <path d="M455 76H650V197H455Z" fill="url(#warmwin)"/>
- <path d="M455 126H650M455 169H650" stroke="#8fa9b4" stroke-opacity=".4" stroke-width="2"/>
- <path d="M455 170H650V197H455Z" fill="#132534"/>
- <path d="M475 178H630V194H475Z" fill="#203d4b"/>
+ <path d="M455 197V76H650V197Z" fill="url(#shop)" stroke="#8199a5" stroke-opacity=".35"/><path d="M455 76H650V197H455Z" fill="url(#warmwin)"/>
+ <path d="M455 126H650M455 169H650" stroke="#8fa9b4" stroke-opacity=".4" stroke-width="2"/><path d="M455 170H650V197H455Z" fill="#132534"/><path d="M475 178H630V194H475Z" fill="#203d4b"/>
  <g fill="#6ed2e1" opacity=".55"><rect x="484" y="180" width="27" height="10"/><rect x="521" y="180" width="27" height="10"/><rect x="558" y="180" width="27" height="10"/></g>
 </g>
-<!-- second three-storey block -->
 <g>
- <path d="M682 197V43H884V197Z" fill="#20394b" stroke="#8ba6b5" stroke-opacity=".34"/>
- <path d="M682 43H884V197H682Z" fill="url(#office)"/>
- <path d="M682 94H884M682 145H884" stroke="#9cb9c7" stroke-opacity=".3" stroke-width="2"/>
- <path d="M682 178H884V197H682Z" fill="#122330"/>
+ <path d="M682 197V43H884V197Z" fill="#20394b" stroke="#8ba6b5" stroke-opacity=".34"/><path d="M682 43H884V197H682Z" fill="url(#office)"/>
+ <path d="M682 94H884M682 145H884" stroke="#9cb9c7" stroke-opacity=".3" stroke-width="2"/><path d="M682 178H884V197H682Z" fill="#122330"/>
 </g>
-<!-- industrial commercial block -->
 <g>
- <path d="M916 197V67H1188V197Z" fill="#243e50" stroke="#8ca7b5" stroke-opacity=".32"/>
- <path d="M916 67H1188V197H916Z" fill="url(#office)"/>
- <path d="M916 116H1188M916 165H1188" stroke="#a4c0cc" stroke-opacity=".25" stroke-width="2"/>
- <path d="M944 77V191M1010 77V191M1076 77V191M1142 77V191" stroke="#9bb7c4" stroke-opacity=".22"/>
- <path d="M916 179H1188V197H916Z" fill="#101f2c"/>
+ <path d="M916 197V67H1188V197Z" fill="#243e50" stroke="#8ca7b5" stroke-opacity=".32"/><path d="M916 67H1188V197H916Z" fill="url(#office)"/>
+ <path d="M916 116H1188M916 165H1188" stroke="#a4c0cc" stroke-opacity=".25" stroke-width="2"/><path d="M944 77V191M1010 77V191M1076 77V191M1142 77V191" stroke="#9bb7c4" stroke-opacity=".22"/><path d="M916 179H1188V197H916Z" fill="#101f2c"/>
 </g>
+<!-- District B: a second, visibly different block sequence to avoid a short repeating loop -->
+<g>
+ <path d="M1220 197V42H1444V197Z" fill="#29485a" stroke="#8eafbd" stroke-opacity=".34"/><path d="M1220 42H1444V197H1220Z" fill="url(#office)"/>
+ <path d="M1220 94H1444M1220 145H1444" stroke="#9cb9c7" stroke-opacity=".3" stroke-width="2"/><path d="M1220 179H1444V197H1220Z" fill="#112330"/>
+</g>
+<g>
+ <path d="M1470 197V12H1650V197Z" fill="url(#glass)" stroke="#8bb3c4" stroke-opacity=".3"/><path d="M1470 12H1650V197H1470Z" fill="url(#office)"/>
+ <path d="M1470 61H1650M1470 111H1650M1470 161H1650" stroke="#a6c7d4" stroke-opacity=".26" stroke-width="2"/><path d="M1490 12V197M1530 12V197M1590 12V197M1630 12V197" stroke="#a6c7d4" stroke-opacity=".18"/>
+ <path d="M1470 179H1650V197H1470Z" fill="#10202e"/>
+</g>
+<g>
+ <path d="M1680 197V84H1900V197Z" fill="url(#shop)" stroke="#8199a5" stroke-opacity=".35"/><path d="M1680 84H1900V197H1680Z" fill="url(#warmwin)"/>
+ <path d="M1680 132H1900M1680 171H1900" stroke="#8fa9b4" stroke-opacity=".4" stroke-width="2"/><path d="M1680 174H1900V197H1680Z" fill="#132534"/>
+ <g fill="#e7bd77" opacity=".6"><rect x="1700" y="181" width="24" height="9"/><rect x="1738" y="181" width="24" height="9"/><rect x="1776" y="181" width="24" height="9"/></g>
+</g>
+<g>
+ <path d="M1940 197V38H2160V197Z" fill="#20394b" stroke="#8ba6b5" stroke-opacity=".34"/><path d="M1940 38H2160V197H1940Z" fill="url(#office)"/>
+ <path d="M1940 91H2160M1940 145H2160" stroke="#9cb9c7" stroke-opacity=".3" stroke-width="2"/><path d="M1960 43V191M2025 43V191M2090 43V191M2145 43V191" stroke="#9bb7c4" stroke-opacity=".22"/><path d="M1940 179H2160V197H1940Z" fill="#101f2c"/>
+</g>
+<g>
+ <path d="M2190 197V55H2388V197Z" fill="url(#glass)" stroke="#8bb3c4" stroke-opacity=".3"/><path d="M2190 55H2388V197H2190Z" fill="url(#office)"/>
+ <path d="M2190 105H2388M2190 155H2388" stroke="#a6c7d4" stroke-opacity=".26" stroke-width="2"/><path d="M2190 179H2388V197H2190Z" fill="#10202e"/>
+</g>
+<g fill="#72d9e8" opacity=".5"><rect x="1280" y="182" width="38" height="9"/><rect x="1328" y="182" width="38" height="9"/><rect x="1688" y="139" width="44" height="18"/><rect x="1738" y="139" width="44" height="18"/></g>
 </svg>
