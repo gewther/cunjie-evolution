@@ -54,6 +54,8 @@ async function main(){
  assert.equal(textures.size,3,'all three scene textures should be cached');
  assert([...textures.values()].every(t=>t.smooth===true),'all city textures should use smooth sampling');
 
+ wrapped(['fenrirCity',0,0,400,240],0,0,400,240); // prime the frame clock
+ calls.length=0;
  wrapped(['fenrirCity',0,0,400,240],0,0,400,240);
  assert.equal(calls.length,3,'Fenrir backdrop should expand into three parallax draws');
  assert.deepEqual(calls.map(c=>c.spr[0]),['fenrirCityFarV1','fenrirCityMidV1','fenrirCityNearV1']);
