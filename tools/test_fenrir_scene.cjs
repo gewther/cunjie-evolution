@@ -3,6 +3,8 @@ const fs=require('fs');
 const path=require('path');
 const vm=require('vm');
 const assert=require('assert');
+const os=require('os');
+const {spawnSync}=require('child_process');
 const root=path.resolve(__dirname,'..');
 const game=path.join(root,'dist-release','game');
 const host=fs.readFileSync(path.join(game,'scripts','impact-host-3.js'),'utf8');
@@ -20,6 +22,39 @@ for(const name of ['city-far.svg','city-mid.svg','city-near.svg']){
  assert(/<svg[^>]*width="1200"[^>]*height="240"[^>]*viewBox="0 0 1200 240"/.test(svg),name+' must be a 1200x240 wide scene layer');
  assert(svg.includes('</svg>'),name+' must close its SVG root');
 }
+
+function testBuildIntegration(){
+ const fixture=fs.mkdtempSync(path.join(os.tmpdir(),'cunjie-fenrir-build-'));
+ try{
+  for(const dir of ['src','assets/fenrir','dist/scripts'])fs.mkdirSync(path.join(fixture,dir),{recursive:true});
+  fs.copyFileSync(path.join(root,'src','fenrir-scene-v1.js'),path.join(fixture,'src','fenrir-scene-v1.js'));
+  for(const name of ['city-far.svg','city-mid.svg','city-near.svg'])fs.copyFileSync(path.join(root,'assets','fenrir',name),path.join(fixture,'assets','fenrir',name));
+  const hostFixture=[
+   'function injectHttpBase(src){return src;}',
+   "function legacySource(kind,motionAtlas='',isFenrir=false){",
+   " const tag='<script>window.__cunjieCustomMotion=true;window.__cunjieFenrirCity=true;</script>';",
+   ' return injectHttpBase(DATA.freeLegacy);',
+   '}',
+   'function paintShoePreviews(){}'
+  ].join(String.fromCharCode(10));
+  fs.writeFileSync(path.join(fixture,'dist','scripts','impact-host-3.js'),hostFixture);
+  const result=spawnSync(process.execPath,[path.join(root,'tools','build_fenrir_scene.cjs')],{
+   encoding:'utf8',env:{...process.env,CUNJIE_ROOT:fixture}
+  });
+  assert.equal(result.status,0,'isolated build fixture should succeed: '+result.stderr);
+  const builtHost=fs.readFileSync(path.join(fixture,'dist','scripts','impact-host-3.js'),'utf8');
+  new vm.Script(builtHost,{filename:'fixture-impact-host-3.js'});
+  assert(builtHost.includes('window.__installFenrirScene'),'builder must inject the Fenrir runtime bridge');
+  assert(builtHost.includes('scripts/fenrir-scene-v1.js'),'builder must load the scene adapter');
+  assert(fs.existsSync(path.join(fixture,'dist','scripts','fenrir-scene-v1.js')),'builder must copy the scene adapter');
+  for(const name of ['city-far.svg','city-mid.svg','city-near.svg']){
+   assert.equal(fs.readFileSync(path.join(fixture,'dist','assets','fenrir',name),'utf8'),fs.readFileSync(path.join(root,'assets','fenrir',name),'utf8'),name+' must be copied byte-for-byte');
+  }
+ }finally{
+  fs.rmSync(fixture,{recursive:true,force:true});
+ }
+}
+testBuildIntegration();
 
 function makeSandbox(ImageClass){
  let tick=1000;
@@ -90,6 +125,6 @@ async function main(){
  assert.equal(failedCalls.length,1,'failed asset loading must preserve the original city backdrop');
  assert.equal(failedCalls[0][0],'fenrirCity');
 
- console.log('Fenrir city scene tests passed: SVG dimensions, async texture loading, three-layer parallax, paw tracking, reduced motion, non-Fenrir passthrough, and graceful asset fallback.');
+ console.log('Fenrir city scene tests passed: isolated build integration, SVG dimensions, async texture loading, Pages subpath URLs, three-layer parallax, paw tracking, reduced motion, non-Fenrir passthrough, and graceful asset fallback.');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});
