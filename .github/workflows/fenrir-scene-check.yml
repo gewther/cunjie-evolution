@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
       - name: Syntax checks
         run: |
           node --check dist-release/game/scripts/impact-host-3.js
