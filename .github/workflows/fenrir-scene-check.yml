@@ -1,0 +1,33 @@
+name: Fenrir scene checks
+on:
+  push:
+    branches:
+      - feat/fenrir-city-scale-scene
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/fenrir-scene-check.yml"
+      - "src/fenrir-scene-v1.js"
+      - "assets/fenrir/*.svg"
+      - "dist-release/game/scripts/impact-host-3.js"
+      - "dist-release/game/scripts/fenrir-scene-v1.js"
+      - "dist-release/game/assets/fenrir/*.svg"
+      - "tools/build_fenrir_scene.cjs"
+      - "tools/test_fenrir_scene.cjs"
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Syntax checks
+        run: |
+          node --check dist-release/game/scripts/impact-host-3.js
+          node --check dist-release/game/scripts/fenrir-scene-v1.js
+          node --check tools/build_fenrir_scene.cjs
+          node --check tools/test_fenrir_scene.cjs
+      - name: Scene asset and integration checks
+        run: node tools/test_fenrir_scene.cjs

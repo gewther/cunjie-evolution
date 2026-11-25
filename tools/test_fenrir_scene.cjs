@@ -15,4 +15,5 @@ for(const name of ['city-far.svg','city-mid.svg','city-near.svg']){
  assert(/<svg[^>]*width="1200"[^>]*height="240"[^>]*viewBox="0 0 1200 240"/.test(svg),name+' must be a 1200x240 wide scene layer');
 }
 assert(host.includes("if(isFenrir){"),'scene injection must be restricted to Fenrir mode');
+assert(host.includes('if(source.split(anchor).length===2)'),'scene bridge must fail open to the original backdrop');
 console.log('Fenrir city scene tests passed: 3 layers, host injection, parallax adapter, reduced-motion gate.');
