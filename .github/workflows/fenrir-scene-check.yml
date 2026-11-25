@@ -10,6 +10,7 @@ on:
       - ".github/workflows/fenrir-scene-check.yml"
       - "src/fenrir-scene-v1.js"
       - "src/fenrir-scene-bridge.js"
+      - "src/fenrir-controls.js"
       - "assets/fenrir/*.svg"
       - "dist-release/game/scripts/impact-host-3.js"
       - "dist-release/game/scripts/fenrir-scene-v1.js"

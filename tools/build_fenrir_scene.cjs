@@ -7,9 +7,10 @@ const root = process.env.CUNJIE_ROOT ? path.resolve(process.env.CUNJIE_ROOT) : p
 const gameDir = path.join(root, process.argv.includes('--release') ? 'dist-release/game' : 'dist');
 const hostPath = path.join(gameDir, 'scripts', 'impact-host-3.js');
 const source = fs.readFileSync(path.join(root, 'src', 'fenrir-scene-v1.js'), 'utf8');
+const controls = fs.readFileSync(path.join(root, 'src', 'fenrir-controls.js'), 'utf8');
 const bridge = fs.readFileSync(path.join(root, 'src', 'fenrir-scene-bridge.js'), 'utf8');
 new vm.Script(source, {filename: 'fenrir-scene-v1.js'});
-new vm.Script(bridge, {filename: 'fenrir-scene-bridge.js'});
+new vm.Script(controls + bridge, {filename: 'fenrir iframe integration'});
 
 let host = fs.readFileSync(hostPath, 'utf8');
 const start = host.indexOf('function legacySource');
@@ -25,7 +26,7 @@ const sourceFunction = [
  "  let source=DATA.freeLegacy.includes('<head>')?DATA.freeLegacy.replace('<head>','<head>'+tag):DATA.freeLegacy;",
  "  if(isFenrir){",
  "   const anchor='ptime = performance.now();\\nmainloop();';",
- "   const bridge=" + JSON.stringify(bridge) + ";",
+ "   const bridge=" + JSON.stringify(controls + bridge) + ";",
  "   if(source.split(anchor).length===2){",
  "    source=source.replace(anchor,()=>bridge+anchor);",
  "    source=source.replace('<head>','<head><script src=\"scripts/fenrir-scene-v1.js\"></script>');",

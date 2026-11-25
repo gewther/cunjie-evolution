@@ -9,6 +9,7 @@ const game = path.join(root, 'dist-release', 'game');
 const read = (dir, file) => fs.readFileSync(path.join(dir, file), 'utf8');
 const host = read(game, 'scripts/impact-host-3.js');
 const scene = read(game, 'scripts/fenrir-scene-v1.js');
+const controls = read(root, 'src/fenrir-controls.js');
 const bridge = read(root, 'src/fenrir-scene-bridge.js');
 assert.equal(scene, read(root, 'src/fenrir-scene-v1.js'));
 
@@ -38,9 +39,10 @@ vm.runInNewContext(fn, placement);
 const rendered = placement.legacySource('free', 'motion.png', true);
 assert(rendered.includes('<base href="https://example.test/cunjie-evolution/">'));
 assert(rendered.includes('<script src="scripts/fenrir-scene-v1.js"></script>'));
-assert(rendered.includes(bridge + anchor));
+assert(rendered.includes(controls + bridge + anchor));
 for (const script of rendered.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/gi)) new vm.Script(script[1]);
 assert(!placement.legacySource('free', 'custom.png', false).includes(bridge));
+assert(!placement.legacySource('free', 'custom.png', false).includes(controls));
 assert(!placement.legacySource('free', 'custom.png', false).includes('scripts/fenrir-scene-v1.js'));
 
 function createScene({textureLimit = 4096, failMid = false} = {}) {
