@@ -21,6 +21,7 @@ function freeEnsureNoise(){
 }
 window.xlFreeEnsureNoise=freeEnsureNoise;
 function freeUpdateRainAmbience(){
+ if(window.__xlImmersionOwnsAmbience)return;
  if(!freeIsFenrir||typeof audio_ctx==='undefined'||!audio_ctx||typeof main_volume_node==='undefined')return;
  const want=active&&!pause&&!tr&&audio_ctx.state==='running';
  if(want&&!freeRainNode){

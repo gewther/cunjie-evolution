@@ -290,6 +290,12 @@ html,body,#app,#play,#mount,#canvasHost{overscroll-behavior:none}
 #play #speaker #bubble{font-size:clamp(12px,2.8vh,14px);line-height:1.4;max-width:min(43vw,270px);padding:6px 9px;overflow-wrap:anywhere}
 #play #speaker #portrait{width:clamp(40px,9vh,58px);height:clamp(40px,9vh,58px);flex:none}
 @media(max-height:430px){#play #speaker{top:max(51px,env(safe-area-inset-top));gap:5px}#play #speaker #bubble{max-width:min(35vw,240px)}#play #hud #v59HitEvent{font-size:11px;padding:3px 6px}}
+/* Wave 1 Immersion: smooth auto-fade HUD during active play */
+#play #hud,#play #quick,#play #hint{transition:opacity .55s ease}
+#play.imm-hud-faded:not(.in-cinematic) #hud{opacity:.26}
+#play.imm-hud-faded:not(.in-cinematic) #quick{opacity:.28}
+#play.imm-hud-faded:not(.in-cinematic) #hint{opacity:.14}
+#play.imm-hud-faded #hud:hover,#play.imm-hud-faded #quick:hover{opacity:1}
 </style></head><body><main id="app">
 <section id="home"><div class="veil"></div><article><small class="eyebrow">PROJECT 寸界 / EVOLUTION · CONTACT FEEL V2</small><h1>三重领域</h1><p>篮球鞋首幕：承重停顿 · 渐进施压 · 接地尘雾与分层声音。</p>
 <label style="display:block;margin:8px 0;color:#d5e6df">场景光景 <select id="roomTheme" style="padding:7px;background:#20343c;color:#e8f2ec;border:1px solid #72908d;border-radius:6px"><option value="rooftop-day" selected>屋顶球场 · 夕阳</option><option value="rooftop-night">屋顶球场 · 夜景</option><option value="bedroom-wood">雨夜木地板 · 高清</option><option value="warm">午后暖光 · 新</option><option value="rain">雨夜灯光 · 新</option><option value="original">原卧室</option></select></label><script src="scripts/room-choice.js"></script>

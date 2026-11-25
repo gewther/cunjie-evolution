@@ -18,6 +18,7 @@ BUILD_STEPS = [
     ("Ground residue v3 module", ["node", "tools/build_residue.cjs"]),
     ("Free Mode & Fenrir wet-asphalt impact v6", ["node", "tools/build_free_impact.cjs"]),
     ("Fenrir Blue-Hour Hunt gameplay", ["node", "tools/build_fenrir.cjs"]),
+    ("Wave 1 Immersion (ambience, haptics, camera, lens FX)", ["node", "tools/build_immersion.cjs"]),
     ("Unified HD & custom skin pack runtime", ["node", "tools/build_skin_runtime.cjs"]),
     ("Standalone offline single-file HTML", [sys.executable, "tools/build_offline_html.py"]),
 ]
@@ -146,6 +147,18 @@ def export_clean_release():
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         shutil.copy2(src, dst)
         total_bytes += os.path.getsize(dst)
+    # Make dist-release/game/ 100% subpath-safe for GitHub Pages (e.g. /cunjie-evolution/)
+    for rel_sub in ("data/touch-v1-free.js", "data/touch-v1-impact.js", "scripts/impact-host-3.js"):
+        p_sub = os.path.join(game_dir, rel_sub.replace("/", os.sep))
+        txt_sub = open(p_sub, "r", encoding="utf-8").read()
+        txt_sub = re.sub(r'''(["']|\\")/assets/''', r"\1assets/", txt_sub)
+        open(p_sub, "w", encoding="utf-8", newline="").write(txt_sub)
+    idx_sub = os.path.join(game_dir, "index.html")
+    idx_txt = open(idx_sub, "r", encoding="utf-8").read()
+    dead_links = '<br><a href="contact-compare.html" style="color:var(--teal)">查看落脚对照 ↗</a> · <a href="contact-before.html" style="color:var(--teal)">游玩修改前版本 ↗</a>'
+    if dead_links in idx_txt:
+        open(idx_sub, "w", encoding="utf-8", newline="").write(idx_txt.replace(dead_links, ""))
+    open(os.path.join(game_dir, ".nojekyll"), "w", encoding="utf-8").write("")
     with open(os.path.join(RELEASE, "start.py"), "w", encoding="utf-8") as f:
         f.write(START_PY)
     with open(os.path.join(RELEASE, "README.txt"), "w", encoding="utf-8") as f:
