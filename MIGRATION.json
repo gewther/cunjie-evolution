@@ -1,0 +1,33 @@
+{
+  "baseline_sha256": "8eafed8491fd3902743b9dd2282d8f2e00e676d864ae95f1568f523f22cc8053",
+  "data_fields_sha256": {
+    "stages": "2d394a78c5701c892bbbd93fab8ebb269fded4a26ed50c9669979c18a2452682",
+    "lines": "581d24b5a858338a54c3162db6193b195c55e7579f08b31d192a56c6f3500514",
+    "original": "7cb347a7ddd2b5db2ab17280409ad6ea3145fe97dcdab46c89037108a78ab1f2",
+    "images": "078ff2a4e26b390fd30ef9d52eca95a93ebca91ccc85c07ac46a58ea3505f553",
+    "audio": "1089fbf14822e55a6f6a175892147499566ba98faf4651f5549c004a4b98ae78",
+    "freeLegacy": "9be22299e5011bed0f59c194d36b474469f0903591e039b1de7a247c34fbc82d",
+    "storyLegacy": "15546ec0ac5ee9a3cc35e8dd3bec1c5907e6541b523bb6493095cf300f442b59",
+    "visualConfig": "0479afeffd1ed000372ba842ae67c5197699d0e48c454d40d39242f28d955051",
+    "fever": "b0c393954fe0a307b7a74874621a37a028d304bc2781b8c65b63dafa369810f5",
+    "tinyVoices": "499ee07b5452ee10f8f5fbb9f0db0f731a5301ded0f1a95550901040972b3ac4",
+    "reactiveGiant": "fc3de5673ec9eb9b973021f3b99800376e78024e37aa16be86c22c01ae51b64e",
+    "responses": "bc6fd7d49412ff0937863ec894e9cdc2dc9053567a897ed1ed34bc18d6b20c5d",
+    "cinematics": "8847390d684ce45fa39e0bc40b48b4edc518ac2e40e23ff97dc41c57102949a4"
+  },
+  "host_scripts": [
+    {
+      "file": "scripts/host-1.js",
+      "sha256": "6c3d8a90db84bc23e87f074aae119727a40f33da784f36a430edaf4541bfb31f"
+    },
+    {
+      "file": "scripts/host-2.js",
+      "sha256": "0b5515d3ed1c27ceb72b6744231160f14fef3e6236778062434a265a21cfa6bc"
+    },
+    {
+      "file": "scripts/host-3.js",
+      "sha256": "1f0f0c4d5215c64abdb33ba2f75d4581f922c54e99d6b297bde86236de17b420"
+    }
+  ],
+  "changes": "Only externalized DATA fields and three host scripts; embedded strings and asset data unchanged. Baseline losslessly gzip archived."
+}

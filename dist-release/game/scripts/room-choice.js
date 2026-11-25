@@ -1,0 +1,1 @@
+(()=>{const el=document.getElementById('roomTheme');if(!el)return;try{el.value=localStorage.getItem('cunjie-room-theme')||'rooftop-day';}catch{}el.onchange=()=>{try{localStorage.setItem('cunjie-room-theme',el.value);}catch{}};})();

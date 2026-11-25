@@ -1,0 +1,24 @@
+{
+  "scope": "AJ6 / Act I candidate only",
+  "checks": {
+    "controller_cases": 8,
+    "javascript_syntax": "passed",
+    "baseline_files_unchanged": 23,
+    "browser_home_and_AJ6_entry": "passed",
+    "browser_manual_and_autopilot": "passed",
+    "browser_pause_resume": "passed",
+    "browser_actual_hit_events": 38,
+    "browser_actual_landings": 3,
+    "browser_actual_releases": 2,
+    "browser_asset_ready": true,
+    "browser_new_draw_calls_observed": 40,
+    "browser_score_progress_observed": 22,
+    "game_page_errors_observed": 0
+  },
+  "limits": [
+    "Desktop cloud Chromium only; not Android hardware",
+    "No full natural three-act playthrough in this pass",
+    "Audio trigger events checked; phone speaker mix requires listening on device",
+    "Art and feel are a review candidate, not user-accepted final art"
+  ]
+}

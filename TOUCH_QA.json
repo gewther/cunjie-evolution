@@ -1,0 +1,36 @@
+{
+  "unit": {
+    "passed": 8,
+    "hoverY": 128,
+    "fastFlickEndY": 83.67,
+    "downSpeedLimit": 130,
+    "accelerationLimit": 700,
+    "lightContactSpeed": 11.37,
+    "fastContactSpeed": 130
+  },
+  "browserGestureReplay": {
+    "classic": {
+      "passed": 9,
+      "total": 9
+    },
+    "impact": {
+      "passed": 9,
+      "total": 9
+    },
+    "method": "TouchEvent dispatch + fixed 20ms real-engine updates; QA scheduler injected only into test iframe memory",
+    "hoverY": 96.73,
+    "flickStartY": 96.73,
+    "flickEndY": 101.28,
+    "pressureReached": 1
+  },
+  "protectedFilesUnchanged": 34,
+  "fullPageSurvival": {
+    "passed": true,
+    "hostClockContinues": true,
+    "engineClockContinues": true,
+    "npcWorldContinues": true,
+    "noRuntimeErrors": true,
+    "regression": "first touch previously raised ReferenceError: realmTouchOwns is not defined"
+  },
+  "limits": "No Android hardware test; this is browser gesture replay and controller verification."
+}
