@@ -1,4 +1,5 @@
 """Build a standalone single-file offline HTML (dist/cunjie-offline.html) for Android / file:// play."""
+import argparse
 import base64
 import json
 import os
@@ -11,6 +12,7 @@ DIST = os.path.join(ROOT, "dist")
 ASSET_MIME = {
     ".webp": "image/webp",
     ".png": "image/png",
+    ".svg": "image/svg+xml",
 }
 
 AJ6_HD_ASSETS = [f"assets/aj6-hd/{i}.webp" for i in range(11)]
@@ -31,8 +33,8 @@ PATCHED_ASSETS = [
 ] + AJ6_HD_ASSETS
 
 
-def to_data_uri(rel_path):
-    fp = os.path.join(DIST, rel_path.replace("/", os.sep))
+def to_data_uri(game_dir, rel_path):
+    fp = os.path.join(game_dir, rel_path.replace("/", os.sep))
     ext = os.path.splitext(fp)[1].lower()
     mime = ASSET_MIME[ext]
     with open(fp, "rb") as f:
@@ -44,25 +46,32 @@ def inline_safe(js_text):
     return js_text.replace("</script", "<\\/script").replace("</SCRIPT", "<\\/SCRIPT")
 
 
-def build_offline_html():
-    uris = {rel: to_data_uri(rel) for rel in PATCHED_ASSETS}
-    html = open(os.path.join(DIST, "impact.html"), encoding="utf-8").read()
+def inline_asset(text, path, uri):
+    for quote in ("'", '"'):
+        for prefix in ("/", ""):
+            text = text.replace(f"{quote}{prefix}{path}{quote}", f"{quote}{uri}{quote}")
+    return text
+
+
+def build_offline_html(game_dir=DIST, entry="impact.html"):
+    uris = {rel: to_data_uri(game_dir, rel) for rel in PATCHED_ASSETS}
+    html = open(os.path.join(game_dir, entry), encoding="utf-8").read()
 
     # Load and inline dist/scripts/room-choice.js right where it appears inside <select>.
-    room_choice = inline_safe(open(os.path.join(DIST, "scripts", "room-choice.js"), encoding="utf-8").read())
+    room_choice = inline_safe(open(os.path.join(game_dir, "scripts", "room-choice.js"), encoding="utf-8").read())
     rc_tag = '<script src="scripts/room-choice.js"></script>'
     assert rc_tag in html, "Missing room-choice.js script tag"
     html = html.replace(rc_tag, f"<script>{room_choice}</script>", 1)
 
     # Order all data bundles cleanly before the host runtime scripts.
-    boot_imgs = open(os.path.join(DIST, "data", "04-images-boot.js"), encoding="utf-8").read()
+    boot_imgs = open(os.path.join(game_dir, "data", "04-images-boot.js"), encoding="utf-8").read()
     for rel in ["assets/rooftop/aj6.webp", "assets/qiaodan-flatheel-v4.webp"]:
         boot_imgs = boot_imgs.replace(f'"{rel}"', f'"{uris[rel]}"')
 
-    def_imgs = open(os.path.join(DIST, "data", "04-images-deferred.js"), encoding="utf-8").read()
+    def_imgs = open(os.path.join(game_dir, "data", "04-images-deferred.js"), encoding="utf-8").read()
 
     # Inline /assets/... references inside touch-v1-impact.js so srcdoc works offline / file://.
-    impact_raw = open(os.path.join(DIST, "data", "touch-v1-impact.js"), encoding="utf-8").read()
+    impact_raw = open(os.path.join(game_dir, "data", "touch-v1-impact.js"), encoding="utf-8").read()
     eq = impact_raw.index("=")
     story_html = json.loads(impact_raw[eq + 1 :].strip().rstrip(";"))
     for rel in [
@@ -75,8 +84,8 @@ def build_offline_html():
         "assets/impact/floor-residue-v3.png",
         "assets/impact/impact-atlas-v1.png",
     ]:
-        assert f"/{rel}" in story_html, f"Expected /{rel} inside storyLegacy"
-        story_html = story_html.replace(f"'/{rel}'", f"'{uris[rel]}'").replace(f'"/{rel}"', f'"{uris[rel]}"')
+        assert rel in story_html, f"Missing {rel} inside storyLegacy"
+        story_html = inline_asset(story_html, rel, uris[rel])
 
     for sm in re.finditer(r"<script[^>]*>([\s\S]*?)</script>", story_html):
         res = subprocess.run(["node", "--check"], input=sm.group(1), text=True, capture_output=True)
@@ -85,12 +94,12 @@ def build_offline_html():
     impact_inlined = 'DATA["storyLegacy"]=' + json.dumps(story_html, ensure_ascii=False).replace("<", "\\u003c") + ";\n"
 
     # Inline /assets/... references inside touch-v1-free.js (Fenrir City) so free mode works offline too.
-    free_raw = open(os.path.join(DIST, "data", "touch-v1-free.js"), encoding="utf-8").read()
+    free_raw = open(os.path.join(game_dir, "data", "touch-v1-free.js"), encoding="utf-8").read()
     feq = free_raw.index("=")
     free_html = json.loads(free_raw[feq + 1 :].strip().rstrip(";"))
-    for rel in ["assets/fenrir/fenrir-city-blue-hour.webp"]:
-        assert f"/{rel}" in free_html, f"Expected /{rel} inside freeLegacy"
-        free_html = free_html.replace(f"'/{rel}'", f"'{uris[rel]}'").replace(f'"/{rel}"', f'"{uris[rel]}"')
+    backdrop = "assets/fenrir/fenrir-city-blue-hour.webp"
+    assert backdrop in free_html, "Missing Fenrir fallback backdrop"
+    free_html = inline_asset(free_html, backdrop, uris[backdrop])
     for sm in re.finditer(r"<script[^>]*>([\s\S]*?)</script>", free_html):
         res = subprocess.run(["node", "--check"], input=sm.group(1), text=True, capture_output=True)
         if res.returncode != 0:
@@ -100,12 +109,23 @@ def build_offline_html():
     # Share the 11 HD AJ6 data URIs once on window.parent.DATA.aj6Hd (read by both story & free iframes).
     aj6_hd_js = 'DATA["aj6Hd"]=' + json.dumps([uris[rel] for rel in AJ6_HD_ASSETS], ensure_ascii=False) + ";\n"
 
-    host3_js = inline_safe(open(os.path.join(DIST, "scripts", "impact-host-3.js"), encoding="utf-8").read())
+    host3_js = inline_safe(open(os.path.join(game_dir, "scripts", "impact-host-3.js"), encoding="utf-8").read())
     fenrir_rel = "assets/fenrir/fenrir-motion-v3.png"
-    assert f"'/{fenrir_rel}'" in host3_js, "Expected Fenrir motion URL inside impact-host-3.js"
-    host3_js = host3_js.replace(f"'/{fenrir_rel}'", f"'{uris[fenrir_rel]}'")
+    assert fenrir_rel in host3_js, "Missing Fenrir motion URL"
+    host3_js = inline_asset(host3_js, fenrir_rel, uris[fenrir_rel])
 
-    cin_js = open(os.path.join(DIST, "data", "13-cinematics.js"), encoding="utf-8").read()
+    layer_uris = {
+        f"assets/fenrir/city-{layer}.svg": to_data_uri(game_dir, f"assets/fenrir/city-{layer}.svg")
+        for layer in ("far", "mid", "near")
+    }
+    scene_path = "scripts/fenrir-scene-v1.js"
+    with open(os.path.join(game_dir, scene_path), encoding="utf-8") as scene:
+        scene_code = f"window.__cunjieFenrirSceneLayers={json.dumps(layer_uris)};\n" + scene.read()
+    assert host3_js.count(scene_path) == 1, "Missing or repeated Fenrir scene script in the host"
+    scene_uri = "data:text/javascript;base64," + base64.b64encode(scene_code.encode("utf-8")).decode("ascii")
+    host3_js = host3_js.replace(scene_path, scene_uri)
+
+    cin_js = open(os.path.join(game_dir, "data", "13-cinematics.js"), encoding="utf-8").read()
 
     script_paths = [
         "scripts/render-quality.js",
@@ -141,10 +161,11 @@ def build_offline_html():
         if isinstance(item, tuple):
             content = item[1]
         else:
-            content = inline_safe(open(os.path.join(DIST, item.replace("/", os.sep)), encoding="utf-8").read())
+            content = inline_safe(open(os.path.join(game_dir, item.replace("/", os.sep)), encoding="utf-8").read())
         chunks.append(f"<script>{content}</script>")
 
     out_html = html[:a] + "".join(chunks) + html[b:]
+    os.makedirs(DIST, exist_ok=True)
     out_path = os.path.join(DIST, "cunjie-offline.html")
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(out_html)
@@ -152,4 +173,10 @@ def build_offline_html():
 
 
 if __name__ == "__main__":
-    build_offline_html()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--release", action="store_true", help="Build from the tracked static release")
+    args = parser.parse_args()
+    if args.release:
+        build_offline_html(os.path.join(ROOT, "dist-release", "game"), "index.html")
+    else:
+        build_offline_html()

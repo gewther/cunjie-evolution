@@ -9,11 +9,15 @@ on:
     paths:
       - ".github/workflows/fenrir-scene-check.yml"
       - "src/fenrir-scene-v1.js"
+      - "src/fenrir-scene-bridge.js"
       - "assets/fenrir/*.svg"
       - "dist-release/game/scripts/impact-host-3.js"
       - "dist-release/game/scripts/fenrir-scene-v1.js"
       - "dist-release/game/assets/fenrir/*.svg"
+      - "dist-release/game/data/touch-v1-*.js"
+      - "tools/build_all.py"
       - "tools/build_fenrir_scene.cjs"
+      - "tools/build_offline_html.py"
       - "tools/test_fenrir_scene.cjs"
 jobs:
   checks:
@@ -23,11 +27,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Syntax checks
+      - name: Build offline HTML and run release regressions
+        run: python3 tools/build_all.py --from-release
+      - name: Verify generated release matches commit
         run: |
-          node --check dist-release/game/scripts/impact-host-3.js
-          node --check dist-release/game/scripts/fenrir-scene-v1.js
-          node --check tools/build_fenrir_scene.cjs
-          node --check tools/test_fenrir_scene.cjs
-      - name: Scene asset and integration checks
-        run: node tools/test_fenrir_scene.cjs
+          git diff --exit-code -- dist-release/game
+          test -s dist/cunjie-offline.html

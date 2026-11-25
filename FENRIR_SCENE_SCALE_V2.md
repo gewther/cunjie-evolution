@@ -18,9 +18,13 @@ The Fenrir character's stated height is 30 m, equivalent to 480 px at this horiz
 | Mid buildings | 2,400 px | 0.36× | Building fronts, shops and block silhouettes |
 | Near street | 2,400 px | 1.00× | Road, markings, vehicles, lamps and barriers |
 
-The 400 px viewport can travel across a 2,000 px scroll range. The camera uses a 16%-of-viewport half-width dead zone around the center. It begins tracking when the paw leaves that zone, adds a small 55 ms directional look-ahead capped at 120 px, and eases toward the target at 7 s⁻¹. Reduced-motion mode returns the camera to the world center and removes look-ahead.
+The 400 px viewport can travel across a 2,000 px scroll range. Inside the 64 px half-width dead zone, the camera holds the current crop. On exit the target moves from that crop toward the corresponding street edge, with filtered 55 ms look-ahead capped at 120 px and tapered at both ends of the transition. Reduced-motion mode returns the camera to the world center, clears prediction, and suppresses the Fenrir iframe's CSS impact motion.
 
-The near road uses 1.0× source movement so road markings and street props remain locked to the ground plane. Far and mid layers move more slowly to create depth.
+The near road uses 1.0× source movement. Its static pools, moving water marks, street furniture, and lane markings share the same crop offset. New water marks are capped at three and drawn for up to 0.85 simulated seconds. The center crop includes a car, a lamp and a pool near the contact band.
+
+## Mechanical foot contact
+
+The built-in Fenrir front foot uses the motion atlas sole geometry at the grounded draw call. With no NPC supporting the foot, the visible sole sits at the existing `floor_y=228` plane while the upper leg compresses and recovers around that contact point. The rear foot retains its deeper ground reference. The wet-road pass reads the existing landing event and converts its contact point to a street coordinate. Reduced-motion and low-effects modes skip this additional road pass.
 
 ## Scope and compatibility
 
@@ -35,12 +39,12 @@ The existing src/free-impact-v6.js and src/immersion-v1.js continue to own wet-a
 
 ## Validation
 
-Run:
+Build the Fenrir release and standalone offline HTML from a clean checkout:
 
 ```sh
-node tools/test_fenrir_scene.cjs
+python3 tools/build_all.py --from-release
 ```
 
-The regression test covers SVG dimensions, ground-line alignment, isolated build integration, byte-identical asset copying, GitHub Pages subpath URLs, async texture loading, three-layer order, dead-zone camera behavior, directional look-ahead, reduced motion, non-Fenrir passthrough and graceful asset-load fallback.
+This regenerates the Fenrir adapter, host bridge, and assets in `dist-release/game` and writes `dist/cunjie-offline.html`. The browser build loads the named files. The offline HTML embeds the same adapter and SVGs. The original full legacy build uses the original `dist/` workspace as its input.
 
-A passing CI run validates code and mocked runtime behavior. Browser visual review and Android/iOS device testing remain separate acceptance steps.
+CI verifies the actual embedded host and engine source, the regenerated release files, syntax, and the contact, impact, touch and Fenrir regressions. The Fenrir tests cover directional lead, dead-zone transition continuity, grounded sole geometry, world-space water marks, and fallback after a missing or oversized texture.

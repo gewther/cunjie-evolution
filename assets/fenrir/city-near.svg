@@ -12,20 +12,30 @@
 <path d="M0 202H2400V240H0Z" fill="url(#asphalt)"/>
 <g fill="#6dc1d0" opacity=".13"><path d="M40 207q34-7 76 0t62 0q-12 8-54 7t-84-7Z"/><path d="M438 216q28-6 66 0t55 0q-9 7-48 7t-73-7Z"/><path d="M900 207q40-8 90 0t65 0q-14 8-70 8t-85-8Z"/><path d="M1350 214q38-7 78 0t62 0q-13 8-66 8t-74-8Z"/><path d="M1880 207q42-8 92 0t65 0q-14 8-70 8t-87-8Z"/><path d="M2240 216q28-6 66 0t55 0q-9 7-48 7t-73-7Z"/></g>
 <g stroke="#d5d8c7" stroke-opacity=".48" stroke-width="2"><path d="M20 228h42M104 228h42M188 228h42M272 228h42M356 228h42M440 228h42M524 228h42M608 228h42M692 228h42M776 228h42M860 228h42M944 228h42M1028 228h42M1112 228h42M1196 228h42M1280 228h42M1364 228h42M1448 228h42M1532 228h42M1616 228h42M1700 228h42M1784 228h42M1868 228h42M1952 228h42M2036 228h42M2120 228h42M2204 228h42M2288 228h42"/></g>
-<!-- 6 m street lamps, repeated at 600 px intervals -->
-<g stroke="url(#lamp)" stroke-width="4" fill="none"><path d="M334 194V103Q334 97 341 97H365M934 194V103Q934 97 941 97H965M1534 194V103Q1534 97 1541 97H1565M2134 194V103Q2134 97 2141 97H2165"/></g>
+<!-- Wet road around the y=228 contact band. Highlights sit just inside the shallow pools. -->
+<g fill="#061523" opacity=".58">
+ <path d="M142 226q38-4 83 0t50 1q-38 4-85 2t-48-3ZM545 225q44-3 90 0t46 0q-33 5-82 4t-54-4ZM1055 226q51-4 111 0t65 0q-44 6-112 4t-64-4ZM1560 227q42-5 91-1t67 0q-49 5-101 4t-57-3ZM2000 225q48-4 104 0t73 1q-46 7-113 4t-64-5Z"/>
+</g>
+<g fill="none" stroke="#88cbdf" stroke-width="1" opacity=".31">
+ <path d="M153 227q45 3 82 0M567 225q30-1 72 1M1071 228q42 4 97 0m12-2h27M1576 228q47 2 72 0M2019 227q36 3 67 0m12-1 37 1"/>
+</g>
+<!-- 6 m street lamps, with one extra scale anchor beside the center-block car. -->
+<g stroke="url(#lamp)" stroke-width="4" fill="none"><path d="M334 194V103Q334 97 341 97H365M934 194V103Q934 97 941 97H965M1134 194V103Q1134 97 1141 97H1165M1534 194V103Q1534 97 1541 97H1565M2134 194V103Q2134 97 2141 97H2165"/></g>
 <g fill="#d8d6c0" opacity=".85"><path d="M360 94h30l5 7h-35Z"/><path d="M960 94h30l5 7h-35Z"/><path d="M1560 94h30l5 7h-35Z"/><path d="M2160 94h30l5 7h-35Z"/></g>
 <g fill="#83d7e8" opacity=".55"><path d="M365 101h24l-3 4h-18Z"/><path d="M965 101h24l-3 4h-18Z"/><path d="M1565 101h24l-3 4h-18Z"/><path d="M2165 101h24l-3 4h-18Z"/></g>
-<g fill="#79d8e9" opacity=".09"><ellipse cx="376" cy="108" rx="20" ry="4"/><ellipse cx="976" cy="108" rx="20" ry="4"/><ellipse cx="1576" cy="108" rx="20" ry="4"/><ellipse cx="2176" cy="108" rx="20" ry="4"/></g>
+<g fill="#79d8e9" opacity=".09"><ellipse cx="376" cy="108" rx="20" ry="4"/><ellipse cx="976" cy="108" rx="20" ry="4"/><ellipse cx="1176" cy="108" rx="20" ry="4"/><ellipse cx="1576" cy="108" rx="20" ry="4"/><ellipse cx="2176" cy="108" rx="20" ry="4"/></g>
 <!-- Traffic signals -->
 <g><path d="M568 194V136M1468 194V136" stroke="#8da6b3" stroke-width="3"/><rect x="558" y="132" width="20" height="38" rx="4" fill="#172b39" stroke="#7d9aa8" stroke-width="1.5"/><rect x="1458" y="132" width="20" height="38" rx="4" fill="#172b39" stroke="#7d9aa8" stroke-width="1.5"/><g><circle cx="568" cy="141" r="4" fill="#e46d62" opacity=".75"/><circle cx="568" cy="152" r="4" fill="#d9b76f" opacity=".65"/><circle cx="568" cy="163" r="4" fill="#70c9a4" opacity=".55"/><circle cx="1468" cy="141" r="4" fill="#e46d62" opacity=".75"/><circle cx="1468" cy="152" r="4" fill="#d9b76f" opacity=".65"/><circle cx="1468" cy="163" r="4" fill="#70c9a4" opacity=".55"/></g></g>
-<!-- Parked and moving vehicles, 4.5 m reference length -->
+<!-- Parked cars, 4.5 m reference length -->
 <g transform="translate(102 169)"><path d="M3 17L9 7Q13 1 25 0H51Q60 1 66 10L70 17V23H0V19Z" fill="url(#car)" stroke="#b4cbd3" stroke-opacity=".55"/><path d="M18 7Q22 2 29 2H48Q55 3 59 10H15Z" fill="#0d2230" stroke="#9dc0cc" stroke-opacity=".45"/><path d="M36 3V11" stroke="#a7c1cb" stroke-opacity=".45"/><path d="M2 16H68V20H2Z" fill="#132431"/><circle cx="16" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/><circle cx="55" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/><rect x="1" y="13" width="4" height="3" fill="#ffbf7c"/><rect x="66" y="13" width="4" height="3" fill="#e66e64"/></g>
 <g transform="translate(760 171) scale(.92 .92)"><path d="M3 17L9 7Q13 1 25 0H51Q60 1 66 10L70 17V23H0V19Z" fill="#536b7b" stroke="#a6bbc6" stroke-opacity=".55"/><path d="M18 7Q22 2 29 2H48Q55 3 59 10H15Z" fill="#0d2230"/><circle cx="16" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/><circle cx="55" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/></g>
 <g transform="translate(1300 169)"><path d="M3 17L9 7Q13 1 25 0H51Q60 1 66 10L70 17V23H0V19Z" fill="#617f8d" stroke="#b4cbd3" stroke-opacity=".55"/><path d="M18 7Q22 2 29 2H48Q55 3 59 10H15Z" fill="#0d2230"/><circle cx="16" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/><circle cx="55" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/></g>
 <g transform="translate(1960 171) scale(.92 .92)"><path d="M3 17L9 7Q13 1 25 0H51Q60 1 66 10L70 17V23H0V19Z" fill="#536b7b" stroke="#a6bbc6" stroke-opacity=".55"/><path d="M18 7Q22 2 29 2H48Q55 3 59 10H15Z" fill="#0d2230"/><circle cx="16" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/><circle cx="55" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/></g>
 <!-- Guardrails and bollards -->
 <g stroke="#819aa6" stroke-width="2" fill="none" opacity=".65"><path d="M620 181h106M620 188h106M620 181v13M646 181v13M672 181v13M698 181v13M726 181v13M1520 181h106M1520 188h106M1520 181v13M1546 181v13M1572 181v13M1598 181v13M1626 181v13"/></g>
+<g fill="none" stroke="#6bb3c3" stroke-opacity=".16">
+ <path d="M375 198v13m2-11v6M974 198v14m2-9v5M1175 198v16m2-11v7M1575 198v13m2-9v5M2175 198v14m2-10v6"/>
+</g>
 <g fill="#c4a875"><rect x="930" y="180" width="5" height="14"/><rect x="950" y="180" width="5" height="14"/><rect x="970" y="180" width="5" height="14"/><rect x="2130" y="180" width="5" height="14"/><rect x="2150" y="180" width="5" height="14"/><rect x="2170" y="180" width="5" height="14"/></g>
 <g stroke="#74bfd0" stroke-opacity=".22" stroke-width="1"><path d="M210 211h38M286 216h21M486 207h46M827 214h32M1060 211h57M1450 210h38M1740 216h34M2060 210h45M2300 214h28"/></g>
 </svg>

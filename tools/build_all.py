@@ -1,4 +1,5 @@
-"""One-command unified build, static-release packager, offline HTML builder, and regression runner for Cunjie v6.0."""
+"""Build Cunjie with the original dist workspace or update its tracked release."""
+import argparse
 import os
 import re
 import shutil
@@ -173,12 +174,12 @@ def export_clean_release():
     print(f"       Exported {len(RELEASE_FILES) + 1} game files ({total_bytes / 1024 / 1024:.2f} MiB) to dist-release/game/")
 
 
-def verify_syntax():
+def verify_syntax(paths):
     print("[STEP] Syntax-checking runtime scripts and offline HTML...")
-    for rel in CHECK_SCRIPTS:
-        res = subprocess.run(["node", "--check", rel], cwd=ROOT, capture_output=True, text=True)
+    for path in paths:
+        res = subprocess.run(["node", "--check", path], cwd=ROOT, capture_output=True, text=True)
         if res.returncode != 0:
-            raise SystemExit(f"Syntax check failed for {rel}: {res.stderr}")
+            raise SystemExit(f"Syntax check failed for {path}: {res.stderr}")
     off_path = os.path.join(DIST, "cunjie-offline.html")
     html = open(off_path, encoding="utf-8").read()
     scripts = re.findall(r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>", html, re.S)
@@ -189,17 +190,29 @@ def verify_syntax():
             res = subprocess.run(["node", "--check", fp], capture_output=True, text=True)
             if res.returncode != 0:
                 raise SystemExit(f"Offline HTML inline script #{i} syntax error: {res.stderr}")
-    print(f"       Checked {len(CHECK_SCRIPTS)} files + {len(scripts)} inline offline scripts OK ({os.path.getsize(off_path)/1024/1024:.2f} MiB)")
+    print(f"       Checked {len(paths)} files + {len(scripts)} inline offline scripts OK ({os.path.getsize(off_path)/1024/1024:.2f} MiB)")
 
 
 def main():
-    for label, cmd in BUILD_STEPS:
-        run_step(label, cmd)
-    export_clean_release()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--from-release", action="store_true",
+                        help="Synchronize the Fenrir sources and rebuild the offline HTML from the tracked release")
+    args = parser.parse_args()
+    if args.from_release:
+        run_step("Fenrir city release sync", ["node", "tools/build_fenrir_scene.cjs", "--release"])
+        run_step("Standalone offline HTML from release", [sys.executable, "tools/build_offline_html.py", "--release"])
+        paths = [os.path.join("dist-release", "game", rel.removeprefix("dist/")) for rel in CHECK_SCRIPTS]
+    else:
+        if not os.path.isfile(os.path.join(DIST, "data", "touch-v1-impact.js")):
+            parser.error("The original dist workspace is missing. Use --from-release to build from a clean checkout.")
+        for label, cmd in BUILD_STEPS:
+            run_step(label, cmd)
+        export_clean_release()
+        paths = CHECK_SCRIPTS
     for label, cmd in TEST_STEPS:
         run_step(label, cmd)
-    verify_syntax()
-    print("\nALL BUILD, RELEASE EXPORT, AND REGRESSION CHECKS PASSED.")
+    verify_syntax(paths)
+    print("\nBUILD AND REGRESSION CHECKS PASSED.")
 
 
 if __name__ == "__main__":
