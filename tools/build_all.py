@@ -20,6 +20,7 @@ BUILD_STEPS = [
     ("Free Mode & Fenrir wet-asphalt impact v6", ["node", "tools/build_free_impact.cjs"]),
     ("Fenrir Blue-Hour Hunt gameplay", ["node", "tools/build_fenrir.cjs"]),
     ("Fenrir city-scale scene layers", ["node", "tools/build_fenrir_scene.cjs"]),
+    ("Free & Fenrir responsive mobile touch v1", ["node", "tools/build_free_touch.cjs"]),
     ("Wave 1 Immersion (ambience, haptics, camera, lens FX)", ["node", "tools/build_immersion.cjs"]),
     ("Unified HD & custom skin pack runtime", ["node", "tools/build_skin_runtime.cjs"]),
     ("PWA manifest, icons & Service Worker", [sys.executable, "tools/build_pwa.py"]),
@@ -31,6 +32,7 @@ TEST_STEPS = [
     ("Impact pass tests", ["node", "tools/test_impact.cjs"]),
     ("Touch vertical tests", ["node", "tools/test_touch.cjs"]),
     ("Direct touch tests", ["node", "tools/test_direct.cjs"]),
+    ("Free & Fenrir responsive touch tests", ["node", "tools/test_free_touch.cjs"]),
     ("Fenrir city scene tests", ["node", "tools/test_fenrir_scene.cjs"]),
     ("PWA manifest & Service Worker tests", ["node", "tools/test_pwa.cjs"]),
 ]
@@ -211,6 +213,7 @@ def main():
     args = parser.parse_args()
     if args.from_release:
         run_step("Fenrir Hunt release sync", ["node", "tools/build_fenrir.cjs", "--release"])
+        run_step("Free & Fenrir responsive touch release sync", ["node", "tools/build_free_touch.cjs", "--release"])
         run_step("Wave 1 Immersion release sync", ["node", "tools/build_immersion.cjs", "--release"])
         run_step("Fenrir city release sync", ["node", "tools/build_fenrir_scene.cjs", "--release"])
         run_step("PWA release sync", [sys.executable, "tools/build_pwa.py", "--release"])

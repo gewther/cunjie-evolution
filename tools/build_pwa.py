@@ -231,6 +231,16 @@ def write_manifest(game_dir):
         f.write("\n")
 
 
+TEXT_HASH_EXTS = (".js", ".json", ".webmanifest", ".svg", ".html", ".css", ".txt")
+
+
+def read_hash_bytes(fp):
+    """Read file bytes with normalized LF for text assets so Windows and Linux CI hash identically."""
+    with open(fp, "rb") as f:
+        data = f.read()
+    return data.replace(b"\r\n", b"\n") if fp.lower().endswith(TEXT_HASH_EXTS) else data
+
+
 def collect_assets(game_dir):
     files = []
     for sub in ("scripts", "data", "assets"):
@@ -249,14 +259,14 @@ def collect_assets(game_dir):
         tp = os.path.join(game_dir, top)
         if os.path.isfile(tp):
             hasher.update(top.encode("utf-8"))
-            hasher.update(open(tp, "rb").read())
+            hasher.update(read_hash_bytes(tp))
 
     core = ["./", "./index.html", "./manifest.webmanifest"]
     all_assets = ["./", "./index.html", "./manifest.webmanifest"]
     for rel, fp in files:
         size = os.path.getsize(fp)
         hasher.update(rel.encode("utf-8"))
-        hasher.update(open(fp, "rb").read())
+        hasher.update(read_hash_bytes(fp))
         url = f"./{rel}"
         all_assets.append(url)
         if rel in CORE_EXACT or rel.startswith(CORE_PREFIXES):
