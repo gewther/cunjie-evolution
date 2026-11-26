@@ -68,6 +68,33 @@ function createFenrirMemory(storage) {
  return {record, save, clear, setEnabled, status, prior: () => ({...prior})};
 }
 
+// Fenrir-only choreography: vary preparation and recovery timing, never physics or aiming.
+function createFenrirCadence(initial = 'playful') {
+ const modes = ['playful', 'deliberate', 'classic'];
+ const labels = {playful:'灵动', deliberate:'从容', classic:'原版'};
+ let mode = modes.includes(initial) ? initial : 'playful';
+ let last = {phase:'manual', factor:1, sequence:0};
+ function configure(value) { if (modes.includes(value)) mode = value; return mode; }
+ function next() { return configure(modes[(modes.indexOf(mode) + 1) % modes.length]); }
+ function factor(input = {}) {
+  const seq = Number.isFinite(input.sequence) ? Math.max(0, Math.floor(input.sequence)) : 0;
+  const phase = input.enabled ? input.phase : 'manual';
+  let value = 1;
+  // One longer theatrical pause every third cycle; no change during approach/contact.
+  if (mode === 'deliberate') {
+   if (phase === 'raise') value = 0.76;
+   else if (phase === 'recover') value = 0.82;
+  } else if (mode === 'playful') {
+   if (phase === 'raise') value = [0.92, 0.78, 1.02][seq % 3];
+   else if (phase === 'recover') value = [1.02, 0.90, 0.80][seq % 3];
+  }
+  last = {phase, factor:value, sequence:seq};
+  return value;
+ }
+ function status() { return {mode, label:labels[mode], ...last}; }
+ return {configure, next, factor, status};
+}
+
 // Session-local persona director. No new movement or collision commands.
 function createFenrirPersona(memory = null) {
  let phase = 'manual', handoffs = 0, interruptions = 0, lastClock = 0;
@@ -231,6 +258,10 @@ if (fenrirCity) {
  try { personaStorage = window.localStorage; } catch {}
  const memory = createFenrirMemory(personaStorage);
  const persona = createFenrirPersona(memory);
+ let cadencePreference;
+ try { cadencePreference = personaStorage?.getItem('cunjie-fenrir-cadence-v3'); } catch {}
+ const cadence = createFenrirCadence(cadencePreference || 'playful');
+ window.__fenrirCadence = () => cadence.status();
  window.__fenrirMemory = () => memory.status();
  window.addEventListener('pagehide', () => memory.save());
  document.addEventListener('visibilitychange', () => { if (document.hidden) memory.save(); });
@@ -290,11 +321,27 @@ if (fenrirCity) {
  clearMemoryButton.onclick = () => { memory.clear(); syncMemoryButtons(); };
  dock.append(memoryButton, clearMemoryButton);
  syncMemoryButtons();
+ const cadenceButton = document.createElement('button');
+ cadenceButton.type = 'button';
+ cadenceButton.id = 'fn-cadence';
+ cadenceButton.title = '仅改变 AI 准备和恢复动作的节奏，不改变手动控制';
+ function syncCadenceButton() {
+  cadenceButton.textContent = '自主节奏：' + cadence.status().label;
+ }
+ cadenceButton.onclick = () => {
+  const mode = cadence.next();
+  try { personaStorage?.setItem('cunjie-fenrir-cadence-v3', mode); } catch {}
+  syncCadenceButton();
+ };
+ cadenceButton.disabled = !pilot;
+ dock.appendChild(cadenceButton);
+ syncCadenceButton();
 
  function setPilot(enabled) {
   if (pilot?.enabled !== enabled) {
    pilot?.setEnabled(enabled, commands);
    if (pilot) persona.setEnabled(enabled, hunt.totalClock);
+   if (!enabled) cadence.factor({enabled:false});
    if (enabled && pilot) {
     realmTouchDisown();
     touchmode = false;
@@ -319,6 +366,10 @@ if (fenrirCity) {
  setPilot(false);
  aiButton.onclick = () => setPilot(!pilot.enabled);
  if (pilot) {
+  const baseSpeed = pilot.speedFactor.bind(pilot);
+  pilot.speedFactor = mood => baseSpeed(mood) * cadence.factor({
+   enabled: pilot.enabled, phase: pilot.phase, sequence: pilot.sequence
+  });
   const chooseTarget = pilot.selectTarget.bind(pilot);
   pilot.selectTarget = (snapshot, previousX) => {
    if (hunt.evacZone) return {x: hunt.evacZone.x, reason: 'evac', type: 'rally', progress: 0};
