@@ -74,12 +74,27 @@ function createFenrirPersona(memory = null) {
  let pending = null, lastLineAt = -Infinity, nextIdleAt = 0;
  let observed = 0, lastChargeBand = false, lastOverdrive = false;
  const pools = {
-  takeover: ['终于轮到我了。看好了。', '交给我？那你就坐稳。', '又把控制权交给我啦？'],
-  return: ['又想自己试试？行吧，轮到你了。', '抢得真快。我还没玩够呢。', '好好好，你来。我看着。'],
-  observe: ['雨声还挺好听的。', '这条街，我已经认熟了。', '你还在看吗？我可没走神。'],
-  ready: ['嗯，核心充满了。要不要试试？', '电量刚刚好。你看见了吗？'],
-  overdrive: ['核心状态确认。让我活动一下。'],
-  recovered: ['冷却完成。刚刚的动静还不错吧？']
+  takeover: [
+   '总算舍得松手了？靠边看着——这条街怎么踩才带劲，我亲自示范。',
+   '交给我就对了，你那步子太客气，底下那群小虫子根本不怕呢。',
+   '哈哈，又轮到我接管？那今晚路口一个都别想完整溜出去！'
+  ],
+  return: [
+   '啧，才热完身就把控制权抢回去？你最好踩得比我狠点。',
+   '行行行，还你就是了——不过漏跑了小老鼠，我可是会笑话你的。',
+   '这就急着亲自动脚了？行啊，我在旁边看着你打算怎么收尾。'
+  ],
+  observe: [
+   '雨越下越密，路面滑得刚好——踩下去连逃跑都打滑，真省事。',
+   '这条大道每一处水洼我都摸熟了，谁往哪儿钻一眼就看穿。',
+   '怎么光盯着看？嫌我踩得太快，连求饶声都没听清吗？'
+  ],
+  ready: [
+   '核心出力顶满 100% 了——还不快按下去，让整条街见识下什么叫过载？',
+   '反应核烫得发亮了哦，再憋着不开大，我可要嫌你太磨蹭了。'
+  ],
+  overdrive: ['过载接管确认——青金电弧全开，整条雨夜大道彻底安静吧！'],
+  recovered: ['冷却结束。呵，刚才那一波电弧清场，动静听着还够爽吧？']
  };
  const cursor = Object.create(null);
  function queue(kind, clock) {
@@ -125,7 +140,7 @@ function createFenrirPersona(memory = null) {
   pending = null;
   const history = memory?.prior();
   const pool = kind === 'takeover' && handoffs === 1 && history?.handoffs > 0
-   ? ['又见面了。今天也交给我？', '上回你也让我接管过。还记得吧？']
+   ? ['又见面啦——上回让我接管还挺过瘾吧？今晚继续由我清场！', '哟，又见面了，上回你可也是直接把整条街丢给我踩的呢。']
    : pools[kind];
   const index = (cursor[kind] || 0) % pool.length;
   cursor[kind] = index + 1;
@@ -159,12 +174,14 @@ if (fenrirCity) {
  style.textContent = `
 #xl-toolbar #fn-dock {
  position:absolute;top:calc(100% + 6px);right:0;bottom:auto;
- width:min(268px,calc(100vw - 20px));display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ width:min(268px,calc(100vw - 20px));max-height:calc(100dvh - 64px);
+ overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
  gap:5px;padding:6px;border:1px solid #476e81;border-radius:8px;background:#101e29f5;opacity:1;line-height:1.2;
 }
 #xl-toolbar #fn-dock[hidden] {display:none}
 #xl-toolbar #fn-dock button {min-height:32px;padding:4px 6px;font-size:12px;touch-action:manipulation}
-#xl-toolbar #fn-tools-btn[aria-expanded="true"],#xl-toolbar #fn-auto-btn[aria-pressed="true"],#xl-toolbar #fn-touch-toggle[aria-pressed="true"] {border-color:#67d6ef;color:#a8f3ff}
+#xl-toolbar #fn-tools-btn[aria-expanded="true"],#xl-toolbar #fn-auto-btn[aria-pressed="true"],#xl-toolbar #fn-touch-toggle[aria-pressed="true"],#xl-toolbar #fn-memory-toggle[aria-pressed="true"] {border-color:#67d6ef;color:#a8f3ff}
 #fn-thumb-pad {
  position:absolute;left:10px;bottom:10px;z-index:13;display:flex;gap:6px;align-items:center;
  pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none;
@@ -183,6 +200,7 @@ if (fenrirCity) {
 }
 #xl-shell.fn-portrait #fn-thumb-pad button {min-height:46px;font-size:13px;}
 @media (pointer:coarse) {#xl-toolbar button,#xl-toolbar #fn-dock button {min-height:44px}}
+@media (max-height:460px) {#xl-toolbar #fn-dock {max-height:calc(100dvh - 54px);gap:4px;padding:5px;}#xl-toolbar #fn-dock button {min-height:36px;font-size:11px;padding:4px 5px;}}
  `;
  document.head.appendChild(style);
  toolbar.insertBefore(toolsButton, document.getElementById('xl-settings'));
