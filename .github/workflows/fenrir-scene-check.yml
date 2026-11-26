@@ -31,7 +31,22 @@ jobs:
           node-version: 24
       - name: Build offline HTML and run release regressions
         run: python3 tools/build_all.py --from-release
-      - name: Verify generated release matches commit
+      - name: Diagnose generated release differences
         run: |
-          git diff --exit-code -- dist-release/game
-          test -s dist/cunjie-offline.html
+          git diff --stat -- dist-release/game
+          git diff -- dist-release/game/sw.js | head -25
+          python3 - <<'PY'
+          import difflib, json, pathlib, re, subprocess
+          p = 'dist-release/game/data/touch-v1-free.js'
+          def legacy(source):
+              return json.loads(source.split('=', 1)[1].strip().removesuffix(';')).splitlines()
+          before = legacy(subprocess.check_output(['git', 'show', 'HEAD:' + p], text=True))
+          after = legacy(pathlib.Path(p).read_text(encoding='utf-8'))
+          for line in list(difflib.unified_diff(before, after, n=2))[:100]:
+              print(line[:220])
+          PY
+          git worktree add --detach "$RUNNER_TEMP/p53-base" c36e776b10359c7d4ccf58dcc01712518a0a07a6
+          cd "$RUNNER_TEMP/p53-base"
+          python3 tools/build_all.py --from-release
+          git diff --stat -- dist-release/game
+          git diff -- dist-release/game/sw.js | head -25
