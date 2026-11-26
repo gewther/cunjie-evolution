@@ -1,4 +1,5 @@
-"""One-command unified build, static-release packager, offline HTML builder, and regression runner for Cunjie v6.0."""
+"""Build Cunjie with the original dist workspace or update its tracked release."""
+import argparse
 import os
 import re
 import shutil
@@ -18,6 +19,7 @@ BUILD_STEPS = [
     ("Ground residue v3 module", ["node", "tools/build_residue.cjs"]),
     ("Free Mode & Fenrir wet-asphalt impact v6", ["node", "tools/build_free_impact.cjs"]),
     ("Fenrir Blue-Hour Hunt gameplay", ["node", "tools/build_fenrir.cjs"]),
+    ("Fenrir city-scale scene layers", ["node", "tools/build_fenrir_scene.cjs"]),
     ("Wave 1 Immersion (ambience, haptics, camera, lens FX)", ["node", "tools/build_immersion.cjs"]),
     ("Unified HD & custom skin pack runtime", ["node", "tools/build_skin_runtime.cjs"]),
     ("Standalone offline single-file HTML", [sys.executable, "tools/build_offline_html.py"]),
@@ -28,6 +30,7 @@ TEST_STEPS = [
     ("Impact pass tests", ["node", "tools/test_impact.cjs"]),
     ("Touch vertical tests", ["node", "tools/test_touch.cjs"]),
     ("Direct touch tests", ["node", "tools/test_direct.cjs"]),
+    ("Fenrir city scene tests", ["node", "tools/test_fenrir_scene.cjs"]),
 ]
 
 CHECK_SCRIPTS = [
@@ -37,6 +40,7 @@ CHECK_SCRIPTS = [
     "dist/scripts/touch-v1-impact-host-1.js",
     "dist/scripts/host-2.js",
     "dist/scripts/impact-host-3.js",
+    "dist/scripts/fenrir-scene-v1.js",
     "dist/data/touch-v1-impact.js",
     "dist/data/touch-v1-free.js",
 ]
@@ -75,6 +79,10 @@ RELEASE_FILES = [
     "assets/impact/impact-atlas-v1.png",
     "assets/fenrir/fenrir-city-blue-hour.webp",
     "assets/fenrir/fenrir-motion-v3.png",
+    "scripts/fenrir-scene-v1.js",
+    "assets/fenrir/city-far.svg",
+    "assets/fenrir/city-mid.svg",
+    "assets/fenrir/city-near.svg",
 ] + [f"assets/aj6-hd/{i}.webp" for i in range(11)]
 
 START_PY = '''"""Run the clean Cunjie v6.0 static release on localhost."""
@@ -166,12 +174,12 @@ def export_clean_release():
     print(f"       Exported {len(RELEASE_FILES) + 1} game files ({total_bytes / 1024 / 1024:.2f} MiB) to dist-release/game/")
 
 
-def verify_syntax():
+def verify_syntax(paths):
     print("[STEP] Syntax-checking runtime scripts and offline HTML...")
-    for rel in CHECK_SCRIPTS:
-        res = subprocess.run(["node", "--check", rel], cwd=ROOT, capture_output=True, text=True)
+    for path in paths:
+        res = subprocess.run(["node", "--check", path], cwd=ROOT, capture_output=True, text=True)
         if res.returncode != 0:
-            raise SystemExit(f"Syntax check failed for {rel}: {res.stderr}")
+            raise SystemExit(f"Syntax check failed for {path}: {res.stderr}")
     off_path = os.path.join(DIST, "cunjie-offline.html")
     html = open(off_path, encoding="utf-8").read()
     scripts = re.findall(r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>", html, re.S)
@@ -182,17 +190,29 @@ def verify_syntax():
             res = subprocess.run(["node", "--check", fp], capture_output=True, text=True)
             if res.returncode != 0:
                 raise SystemExit(f"Offline HTML inline script #{i} syntax error: {res.stderr}")
-    print(f"       Checked {len(CHECK_SCRIPTS)} files + {len(scripts)} inline offline scripts OK ({os.path.getsize(off_path)/1024/1024:.2f} MiB)")
+    print(f"       Checked {len(paths)} files + {len(scripts)} inline offline scripts OK ({os.path.getsize(off_path)/1024/1024:.2f} MiB)")
 
 
 def main():
-    for label, cmd in BUILD_STEPS:
-        run_step(label, cmd)
-    export_clean_release()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--from-release", action="store_true",
+                        help="Synchronize the Fenrir sources and rebuild the offline HTML from the tracked release")
+    args = parser.parse_args()
+    if args.from_release:
+        run_step("Fenrir city release sync", ["node", "tools/build_fenrir_scene.cjs", "--release"])
+        run_step("Standalone offline HTML from release", [sys.executable, "tools/build_offline_html.py", "--release"])
+        paths = [os.path.join("dist-release", "game", rel.removeprefix("dist/")) for rel in CHECK_SCRIPTS]
+    else:
+        if not os.path.isfile(os.path.join(DIST, "data", "touch-v1-impact.js")):
+            parser.error("The original dist workspace is missing. Use --from-release to build from a clean checkout.")
+        for label, cmd in BUILD_STEPS:
+            run_step(label, cmd)
+        export_clean_release()
+        paths = CHECK_SCRIPTS
     for label, cmd in TEST_STEPS:
         run_step(label, cmd)
-    verify_syntax()
-    print("\nALL BUILD, RELEASE EXPORT, AND REGRESSION CHECKS PASSED.")
+    verify_syntax(paths)
+    print("\nBUILD AND REGRESSION CHECKS PASSED.")
 
 
 if __name__ == "__main__":
