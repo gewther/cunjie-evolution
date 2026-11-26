@@ -4,13 +4,14 @@ const path = require('path');
 const vm = require('vm');
 
 const root = path.resolve(__dirname, '..');
+const gameDir = path.join(root, process.argv.includes('--release') ? 'dist-release/game' : 'dist');
 const src = fs.readFileSync(path.join(root, 'src', 'immersion-v1.js'), 'utf8');
 const begin = '/* IMMERSION_V1_BEGIN */';
 const end = '/* IMMERSION_V1_END */\n';
 const block = `${begin}\n${src}\n${end}`;
 
 function injectInto(relFile) {
-  const file = path.join(root, relFile);
+  const file = path.join(gameDir, relFile);
   const raw = fs.readFileSync(file, 'utf8');
   const eq = raw.indexOf('=');
   const prefix = raw.slice(0, eq + 1);
@@ -34,6 +35,6 @@ function injectInto(relFile) {
   fs.writeFileSync(file, out, 'utf8');
 }
 
-injectInto(path.join('dist', 'data', 'touch-v1-impact.js'));
-injectInto(path.join('dist', 'data', 'touch-v1-free.js'));
-console.log('Wave 1 Immersion module built into touch-v1-impact.js and touch-v1-free.js, syntax checked');
+injectInto(path.join('data', 'touch-v1-impact.js'));
+injectInto(path.join('data', 'touch-v1-free.js'));
+console.log('Wave 1 Immersion module built into', path.relative(root, gameDir), ', syntax checked');

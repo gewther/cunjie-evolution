@@ -8,6 +8,8 @@ if (fenrirCity) {
  const toolbar = document.getElementById('xl-toolbar');
  const dock = document.getElementById('fn-dock');
  const result = document.getElementById('fn-result');
+ const stageHost = document.getElementById('outcanvasd') || document.getElementById('screen');
+ const portraitBot = document.getElementById('fn-portrait-bot');
  const toolsButton = document.createElement('button');
  toolsButton.id = 'fn-tools-btn';
  toolsButton.type = 'button';
@@ -22,7 +24,24 @@ if (fenrirCity) {
 }
 #xl-toolbar #fn-dock[hidden] {display:none}
 #xl-toolbar #fn-dock button {min-height:32px;padding:4px 6px;font-size:12px;touch-action:manipulation}
-#xl-toolbar #fn-tools-btn[aria-expanded="true"],#xl-toolbar #fn-auto-btn[aria-pressed="true"] {border-color:#67d6ef;color:#a8f3ff}
+#xl-toolbar #fn-tools-btn[aria-expanded="true"],#xl-toolbar #fn-auto-btn[aria-pressed="true"],#xl-toolbar #fn-touch-toggle[aria-pressed="true"] {border-color:#67d6ef;color:#a8f3ff}
+#fn-thumb-pad {
+ position:absolute;left:10px;bottom:10px;z-index:13;display:flex;gap:6px;align-items:center;
+ pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none;
+}
+#fn-thumb-pad[hidden] {display:none!important}
+#fn-thumb-pad button {
+ min-width:56px;min-height:42px;padding:6px 10px;border-radius:10px;
+ border:1px solid #48e5ff80;background:#0a1d2cd9;color:#e8f8ff;
+ font-size:12px;font-weight:700;backdrop-filter:blur(4px);box-shadow:0 3px 12px #0008;
+ touch-action:none;user-select:none;-webkit-user-select:none;
+}
+#fn-thumb-pad button[data-act="press"] {border-color:#ffd166a8;background:#3a2b10de;color:#ffeab8}
+#fn-thumb-pad button:active,#fn-thumb-pad button.pressed {transform:translateY(1px);filter:brightness(1.25)}
+#xl-shell.fn-portrait #fn-thumb-pad {
+ position:static;order:1;width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+}
+#xl-shell.fn-portrait #fn-thumb-pad button {min-height:46px;font-size:13px;}
 @media (pointer:coarse) {#xl-toolbar button,#xl-toolbar #fn-dock button {min-height:44px}}
  `;
  document.head.appendChild(style);
@@ -161,22 +180,116 @@ if (fenrirCity) {
    focusCanvas();
   }
  });
+ // Mobile Thumb Action Pad (Lift / Drop / Press) for comfortable phone play
+ const isCoarsePointer = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches;
+ let thumbPadPref = null;
+ try {
+  const saved = localStorage.getItem('cunjie-fn-thumb-pad');
+  if (saved === '1') thumbPadPref = true;
+  else if (saved === '0') thumbPadPref = false;
+ } catch {}
+ let thumbPadOn = thumbPadPref !== null ? thumbPadPref : isCoarsePointer;
+ const thumbPad = document.createElement('nav');
+ thumbPad.id = 'fn-thumb-pad';
+ thumbPad.setAttribute('aria-label', '芬里尔触屏动作控制');
+ let pressHoldActive = false;
+ for (const [act, label] of [['up', '抬起'], ['down', '落脚'], ['press', '施压']]) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.dataset.act = act;
+  b.textContent = label;
+  const trigger = () => {
+   setPilot(false);
+   if (act === 'up') document.getElementById('xl-up')?.click();
+   else if (act === 'down') document.getElementById('xl-down')?.click();
+   else {
+    pressHoldActive = true;
+    b.classList.add('pressed');
+    if (typeof mp !== 'undefined') mp = true;
+    my = h - 1;
+    paw_dest_y = h;
+   }
+  };
+  b.addEventListener('pointerdown', e => {
+   if (e.cancelable) e.preventDefault();
+   e.stopPropagation();
+   if (b.setPointerCapture) try { b.setPointerCapture(e.pointerId); } catch {}
+   trigger();
+  }, {passive: false});
+  if (act === 'press') {
+   for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+    b.addEventListener(ev, e => {
+     e.stopPropagation();
+     if (!pressHoldActive) return;
+     pressHoldActive = false;
+     b.classList.remove('pressed');
+     if (typeof mr !== 'undefined') mr = true;
+     if (typeof mp !== 'undefined') mp = false;
+     my = paw_y / 2;
+    }, {passive: true});
+   }
+  }
+  b.addEventListener('click', e => {
+   e.stopPropagation();
+   if (e.detail === 0) trigger();
+  });
+  thumbPad.appendChild(b);
+ }
+ if (stageHost) stageHost.appendChild(thumbPad);
+
+ const thumbToggleBtn = document.createElement('button');
+ thumbToggleBtn.id = 'fn-touch-toggle';
+ thumbToggleBtn.type = 'button';
+ function syncThumbPad() {
+  const portrait = shell.classList.contains('fn-portrait');
+  const visible = thumbPadOn || portrait;
+  thumbPad.hidden = !visible;
+  if (portrait && portraitBot && thumbPad.parentNode !== portraitBot) {
+   portraitBot.insertBefore(thumbPad, document.getElementById('xl-bubble'));
+  } else if (!portrait && stageHost && thumbPad.parentNode !== stageHost) {
+   stageHost.appendChild(thumbPad);
+  }
+  thumbToggleBtn.textContent = '触屏按键：' + (thumbPadOn ? '开' : '关');
+  thumbToggleBtn.setAttribute('aria-pressed', String(thumbPadOn));
+ }
+ thumbToggleBtn.onclick = () => {
+  thumbPadOn = !thumbPadOn;
+  try { localStorage.setItem('cunjie-fn-thumb-pad', thumbPadOn ? '1' : '0'); } catch {}
+  syncThumbPad();
+ };
+ dock.appendChild(thumbToggleBtn);
+ window.addEventListener('fn-layout-change', syncThumbPad);
+ syncThumbPad();
+
  // The canvas container cancels touchend to handle drag release. Keep
  // control touches away from that handler so the browser can dispatch clicks.
- for (const controls of [dock, result, document.getElementById('xl-result')]) {
+ for (const controls of [dock, thumbPad, result, document.getElementById('xl-result')]) {
+  if (!controls) continue;
   for (const type of ['touchstart', 'touchmove', 'touchend', 'touchcancel']) {
    controls.addEventListener(type, event => event.stopPropagation(), {passive: true});
   }
  }
 
  function syncFullscreenButton() {
-  const label = nativeFullscreen() ? '退出全屏' : immersive() ? '退出铺满' : '全屏';
+  let parentFull = false;
+  try { parentFull = !!(window.parent && window.parent !== window && window.parent.document.fullscreenElement); } catch {}
+  const activeFull = nativeFullscreen() || parentFull;
+  const label = activeFull ? '退出全屏' : immersive() ? '退出铺满' : '全屏';
   fullscreenButton.textContent = '⛶ ' + label;
   fullscreenButton.setAttribute('aria-label', label);
-  fullscreenButton.setAttribute('aria-pressed', String(nativeFullscreen() || immersive()));
+  fullscreenButton.setAttribute('aria-pressed', String(activeFull || immersive()));
  }
 
  async function toggleFullscreen() {
+  const hostEmbedded = !!(window.frameElement && window.parent && window.parent !== window);
+  if (hostEmbedded) {
+   try {
+    window.parent.postMessage({type: 'cunjie-toggle-fullscreen'}, '*');
+    setTimeout(syncFullscreenButton, 120);
+    focusCanvas();
+    return;
+   } catch {}
+  }
   if (nativeFullscreen()) {
    await document.exitFullscreen().catch(() => {});
   } else if (immersive()) {
@@ -199,6 +312,12 @@ if (fenrirCity) {
 
  fullscreenButton.onclick = toggleFullscreen;
  document.addEventListener('fullscreenchange', syncFullscreenButton);
+ try {
+  if (window.parent && window.parent !== window) {
+   window.parent.document.addEventListener('fullscreenchange', syncFullscreenButton);
+   window.addEventListener('pagehide', () => window.parent.document.removeEventListener('fullscreenchange', syncFullscreenButton), {once: true});
+  }
+ } catch {}
  syncFullscreenButton();
 
  function handleShortcut(event) {

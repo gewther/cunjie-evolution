@@ -199,6 +199,8 @@ def main():
                         help="Synchronize the Fenrir sources and rebuild the offline HTML from the tracked release")
     args = parser.parse_args()
     if args.from_release:
+        run_step("Fenrir Hunt release sync", ["node", "tools/build_fenrir.cjs", "--release"])
+        run_step("Wave 1 Immersion release sync", ["node", "tools/build_immersion.cjs", "--release"])
         run_step("Fenrir city release sync", ["node", "tools/build_fenrir_scene.cjs", "--release"])
         run_step("Standalone offline HTML from release", [sys.executable, "tools/build_offline_html.py", "--release"])
         paths = [os.path.join("dist-release", "game", rel.removeprefix("dist/")) for rel in CHECK_SCRIPTS]

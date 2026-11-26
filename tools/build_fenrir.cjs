@@ -4,11 +4,18 @@ const path = require('path');
 const vm = require('vm');
 
 const root = path.resolve(__dirname, '..');
-const file = path.join(root, 'dist', 'data', 'touch-v1-free.js');
+const gameDir = path.join(root, process.argv.includes('--release') ? 'dist-release/game' : 'dist');
+const file = path.join(gameDir, 'data', 'touch-v1-free.js');
 const raw = fs.readFileSync(file, 'utf8');
 const eq = raw.indexOf('=');
 const prefix = raw.slice(0, eq + 1);
 let html = JSON.parse(raw.slice(eq + 1).trim().replace(/;$/, ''));
+
+const hudOld = 'if(stamp!==lastHUD){lastHUD=stamp;';
+const hudNew = 'if(stamp!==lastHUD&&!window.__xlFenrirOwnsHud){lastHUD=stamp;';
+if (html.includes(hudOld)) {
+  html = html.replace(hudOld, hudNew);
+}
 
 const src = fs.readFileSync(path.join(root, 'src', 'fenrir-gameplay.js'), 'utf8');
 const block = `/* FENRIR_GAMEPLAY_BEGIN */\n${src}\n/* FENRIR_GAMEPLAY_END */\n`;
@@ -27,8 +34,8 @@ if (html.includes(begin)) {
 }
 
 for (const m of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/gi)) {
-  new vm.Script(m[1], { filename: 'touch-v1-free-fenrir-inner.js' });
+  if (m[1].trim()) new vm.Script(m[1], { filename: 'touch-v1-free-fenrir-inner.js' });
 }
 const out = prefix + JSON.stringify(html).replace(/</g, '\\u003c') + ';\n';
 fs.writeFileSync(file, out, 'utf8');
-console.log('Fenrir gameplay module built into dist/data/touch-v1-free.js, syntax checked');
+console.log('Fenrir gameplay module built into', path.relative(root, file), ', syntax checked');
