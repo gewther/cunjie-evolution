@@ -7,8 +7,8 @@ const root = process.env.CUNJIE_ROOT ? path.resolve(process.env.CUNJIE_ROOT) : p
 const gameDir = path.join(root, process.argv.includes('--release') ? 'dist-release/game' : 'dist');
 const hostPath = path.join(gameDir, 'scripts', 'impact-host-3.js');
 const source = fs.readFileSync(path.join(root, 'src', 'fenrir-scene-v1.js'), 'utf8');
-const controls = fs.readFileSync(path.join(root, 'src', 'fenrir-controls.js'), 'utf8');
-const bridge = fs.readFileSync(path.join(root, 'src', 'fenrir-scene-bridge.js'), 'utf8');
+const controls = fs.readFileSync(path.join(root, 'src', 'fenrir-controls.js'), 'utf8').replace(/\r\n/g, '\n');
+const bridge = fs.readFileSync(path.join(root, 'src', 'fenrir-scene-bridge.js'), 'utf8').replace(/\r\n/g, '\n');
 new vm.Script(source, {filename: 'fenrir-scene-v1.js'});
 new vm.Script(controls + bridge, {filename: 'fenrir iframe integration'});
 
