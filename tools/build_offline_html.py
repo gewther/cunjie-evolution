@@ -56,6 +56,12 @@ def inline_asset(text, path, uri):
 def build_offline_html(game_dir=DIST, entry="impact.html"):
     uris = {rel: to_data_uri(game_dir, rel) for rel in PATCHED_ASSETS}
     html = open(os.path.join(game_dir, entry), encoding="utf-8").read()
+    for pwa_link in (
+        '<link rel="manifest" href="manifest.webmanifest">',
+        '<link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">',
+        '<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png">',
+    ):
+        html = html.replace(pwa_link, "")
 
     # Load and inline dist/scripts/room-choice.js right where it appears inside <select>.
     room_choice = inline_safe(open(os.path.join(game_dir, "scripts", "room-choice.js"), encoding="utf-8").read())

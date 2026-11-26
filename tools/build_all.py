@@ -22,6 +22,7 @@ BUILD_STEPS = [
     ("Fenrir city-scale scene layers", ["node", "tools/build_fenrir_scene.cjs"]),
     ("Wave 1 Immersion (ambience, haptics, camera, lens FX)", ["node", "tools/build_immersion.cjs"]),
     ("Unified HD & custom skin pack runtime", ["node", "tools/build_skin_runtime.cjs"]),
+    ("PWA manifest, icons & Service Worker", [sys.executable, "tools/build_pwa.py"]),
     ("Standalone offline single-file HTML", [sys.executable, "tools/build_offline_html.py"]),
 ]
 
@@ -31,6 +32,7 @@ TEST_STEPS = [
     ("Touch vertical tests", ["node", "tools/test_touch.cjs"]),
     ("Direct touch tests", ["node", "tools/test_direct.cjs"]),
     ("Fenrir city scene tests", ["node", "tools/test_fenrir_scene.cjs"]),
+    ("PWA manifest & Service Worker tests", ["node", "tools/test_pwa.cjs"]),
 ]
 
 CHECK_SCRIPTS = [
@@ -41,11 +43,16 @@ CHECK_SCRIPTS = [
     "dist/scripts/host-2.js",
     "dist/scripts/impact-host-3.js",
     "dist/scripts/fenrir-scene-v1.js",
+    "dist/scripts/pwa.js",
+    "dist/sw.js",
     "dist/data/touch-v1-impact.js",
     "dist/data/touch-v1-free.js",
 ]
 
 RELEASE_FILES = [
+    "manifest.webmanifest",
+    "sw.js",
+    "scripts/pwa.js",
     "scripts/render-quality.js",
     "scripts/skin-packs.js",
     "scripts/room-choice.js",
@@ -83,6 +90,10 @@ RELEASE_FILES = [
     "assets/fenrir/city-far.svg",
     "assets/fenrir/city-mid.svg",
     "assets/fenrir/city-near.svg",
+    "assets/icons/icon-180.png",
+    "assets/icons/icon-192.png",
+    "assets/icons/icon-512.png",
+    "assets/icons/icon-512-maskable.png",
 ] + [f"assets/aj6-hd/{i}.webp" for i in range(11)]
 
 START_PY = '''"""Run the clean Cunjie v6.0 static release on localhost."""
@@ -202,6 +213,7 @@ def main():
         run_step("Fenrir Hunt release sync", ["node", "tools/build_fenrir.cjs", "--release"])
         run_step("Wave 1 Immersion release sync", ["node", "tools/build_immersion.cjs", "--release"])
         run_step("Fenrir city release sync", ["node", "tools/build_fenrir_scene.cjs", "--release"])
+        run_step("PWA release sync", [sys.executable, "tools/build_pwa.py", "--release"])
         run_step("Standalone offline HTML from release", [sys.executable, "tools/build_offline_html.py", "--release"])
         paths = [os.path.join("dist-release", "game", rel.removeprefix("dist/")) for rel in CHECK_SCRIPTS]
     else:
