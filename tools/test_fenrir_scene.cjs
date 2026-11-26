@@ -145,6 +145,59 @@ async function main() {
  assert.equal(status.lastRoadMark.worldX, worldX);
  assert(Math.abs(status.lastRoadMark.x + status.cameraX - worldX) < 1e-8);
 
+ // P5: heavy impacts leave longer-lived road imprints and delayed secondary ripples.
+ const weighted = createScene();
+ await new Promise(resolve => setImmediate(resolve));
+ const wapi = weighted.api, wstatus = weighted.status;
+ const presses = [], rings = [];
+ const wetFx = {ready: () => true, drawContactPress: (...args) => presses.push(args), drawImpactRing: (...args) => rings.push(args)};
+ wapi.recordLanding({kind: 'landing', x: 200, at: 1, force: 0.9});
+ weighted.draw();
+ wapi.drawRoadContact(wetFx, 1.2);
+ assert.equal(rings.length, 2, 'a firm landing creates a delayed secondary water front');
+ assert.equal(wstatus.weight.roadMarks, 1);
+ rings.length = 0;
+ presses.length = 0;
+ wapi.drawRoadContact(wetFx, 2.3);
+ assert.equal(rings.length, 0, 'short-lived waves stop before the road imprint');
+ assert.equal(presses.length, 1, 'a wet contact imprint persists during recovery');
+ wapi.drawRoadContact(wetFx, 4.21);
+ assert.equal(wstatus.weight.roadMarks, 0, 'road marks expire');
+ weighted.pose.supported = true;
+ wapi.recordLanding({kind: 'landing', x: 200, at: 5, force: 1});
+ wapi.drawRoadContact(wetFx, 5.01);
+ assert.equal(wstatus.weight.roadMarks, 0, 'supported contact must not mark the road');
+ weighted.pose.supported = false;
+ for (let i = 0; i < 10; i++) {
+  const at = 6 + i * 0.1;
+  wapi.recordLanding({kind: 'landing', x: 200, at, force: 1});
+  wapi.drawRoadContact(wetFx, at);
+ }
+ assert.equal(wstatus.weight.roadMarks, 6, 'particle/mark budget remains bounded');
+ weighted.window.__xlImmersionPrefs.lowEffects = true;
+ wapi.drawRoadContact(wetFx, 7.1);
+ assert.equal(wstatus.weight.roadMarks, 0);
+ weighted.window.__xlImmersionPrefs.lowEffects = false;
+ wapi.drawRoadContact(wetFx, 7.2);
+ assert.equal(wstatus.weight.roadMarks, 0, 'disabled effects never replay');
+ wapi.recordLanding({kind: 'landing', x: 200, at: 7.3, force: 0.9});
+ wapi.drawRoadContact(wetFx, 7.31);
+ wapi.drawRoadContact(wetFx, 0.01);
+ assert.equal(wstatus.weight.roadMarks, 0, 'clock reset clears prior run effects');
+
+ const weightedDraw = wapi.wrapFrontFoot(() => wapi.drawSprite(foot, 120, -23, 160, 256));
+ weighted.pose.age = 0;
+ weighted.pose.force = 0.2;
+ weightedDraw();
+ const light = wstatus.weight.compression;
+ weighted.pose.force = 0.9;
+ weightedDraw();
+ assert(wstatus.weight.compression > light, 'heavier impact increases suspension compression');
+ assert(wstatus.weight.compression <= 0.058, 'visual compression is bounded');
+ weighted.window.__xlImmersionPrefs.reduceMotion = true;
+ weightedDraw();
+ assert(wstatus.weight.compression < light, 'reduced motion preserves the sole anchor with minimal travel');
+
  window.__xlImmersionPrefs.lowEffects = true;
  api.drawRoadContact(effects, 1.16);
  assert.equal(status.lastRoadMark, null);
@@ -165,6 +218,6 @@ async function main() {
   failed.draw();
   assert.deepEqual(failed.calls[0], [failed.original, 0, 0, 400, 240]);
  }
- console.log('Fenrir tests passed: release assets and host, actual iframe injection, camera continuity, sole anchor, world-space water, and fallback.');
+ console.log('Fenrir tests passed: release assets and host, actual iframe injection, camera continuity, sole anchor, world-space water, P5 settling and mark budget, and fallback.');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });
