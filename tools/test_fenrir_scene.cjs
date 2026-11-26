@@ -163,9 +163,52 @@ function testMemory() {
  assert.equal(corrupt.status().handoffs, 0);
  assert.equal(corrupt.status().aiSeconds, 100000000);
 }
+function testCadence() {
+ const sandbox = {fenrirCity:false};
+ vm.runInNewContext(controls, sandbox);
+ const c = sandbox.createFenrirCadence('playful');
+ assert.equal(c.factor({enabled:true,phase:'raise',sequence:1}), 0.78);
+ assert.equal(c.factor({enabled:true,phase:'raise',sequence:2}), 1.02);
+ assert.equal(c.factor({enabled:true,phase:'recover',sequence:2}), 0.80);
+ for (const phase of ['aim','down','press','sweep']) assert.equal(c.factor({enabled:true,phase,sequence:1}),1);
+ assert.equal(c.factor({enabled:false,phase:'raise',sequence:1}),1);
+ assert.equal(c.next(),'deliberate');
+ assert.equal(c.factor({enabled:true,phase:'raise',sequence:1}),0.76);
+ assert.equal(c.next(),'classic');
+ for (const phase of ['raise','aim','down','press','recover']) assert.equal(c.factor({enabled:true,phase,sequence:2}),1);
+ assert.equal(c.next(),'playful');
+ assert.equal(c.configure('invalid'),'playful');
+ assert.equal(sandbox.createFenrirCadence('bad').status().mode,'playful');
+ // Exercise the actual legacy controller, not just the timing helper.
+ const engine = read(game, 'scripts/touch-v1-impact-host-1.js');
+ const mark = engine.indexOf('/* Project Cunjie v4.7. Offline decision controller');
+ const stop = engine.indexOf('})(globalThis);',mark);
+ assert(mark>=0 && stop>mark);
+ vm.runInNewContext(engine.slice(mark,stop+'})(globalThis);'.length),sandbox);
+ function simulate(mode) {
+  const pilot = new sandbox.AutonomousXiaolong({enabled:true,personality:'hunter',pace:'normal'});
+  const tempo = sandbox.createFenrirCadence(mode);
+  const base = pilot.speedFactor.bind(pilot);
+  pilot.speedFactor = mood => base(mood)*tempo.factor({enabled:pilot.enabled,phase:pilot.phase,sequence:pilot.sequence});
+  const commands = [];
+  const api = {command:(kind) => {commands.push(kind);return true;}};
+  let elapsed = 0;
+  const snapshot = {world:{width:400,footX:200,footState:0},visual:{footCollisionWidth:160},npcs:[]};
+  while(pilot.phase==='raise' && elapsed<2) {pilot.tick(.01,snapshot,api,{value:20});elapsed+=.01;}
+  assert.equal(pilot.phase,'aim');
+  assert(commands.every(k=>k==='up'||k==='release'));
+  pilot.setEnabled(false,api);
+  const n=commands.length;
+  pilot.tick(.1,snapshot,api,{value:20});
+  assert.equal(commands.length,n,'manual handoff stops AI commands');
+  return elapsed;
+ }
+ assert(simulate('deliberate') > simulate('classic'));
+}
 async function main() {
  testPersona();
  testMemory();
+ testCadence();
  const env = createScene();
  const {api, status, textures, calls, urls, window, pose} = env;
  await new Promise(resolve => setImmediate(resolve));
