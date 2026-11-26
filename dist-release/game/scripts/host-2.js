@@ -3,24 +3,43 @@ class RealmRenderer{
  constructor(canvas,images){this.canvas=canvas;this.c=canvas.getContext('2d');this.im=images;}
  resize(){let r=this.canvas.getBoundingClientRect(),d=Math.min(g.devicePixelRatio||1,1.75);this.width=r.width;this.height=r.height;this.canvas.width=Math.round(r.width*d);this.canvas.height=Math.round(r.height*d);this.c.setTransform(d,0,0,d,0,0);}
  base(){let c=this.c;c.save();c.scale(this.width/1000,this.height/600);c.clearRect(0,0,1000,600);return c;}
- tiny(c,n,x,y,scale=1){c.save();c.translate(x,y);if(n.dir<0)c.scale(-1,1);c.imageSmoothingEnabled=false;if(this.im.tinies){const col=(Math.floor(n.x/19)%4+4)%4,row=1;const ww=18*scale,hh=27*scale;c.drawImage(this.im.tinies,col*48,row*64,48,64,-ww/2,-hh,ww,hh);}else c.drawImage(this.im.background,0,272+(Math.floor(n.x/4)%12)*32,32,32,-4*scale,-8*scale,8*scale,8*scale);c.restore();}
- floorPreview(index){let c=this.base();c.imageSmoothingEnabled=false;if(index===2&&(this.im.bedside||this.im.stage3Normal))c.drawImage(this.im.bedside||this.im.stage3Normal,0,0,1000,600);else if(index===1&&this.im.stage2Normal)c.drawImage(this.im.stage2Normal,0,0,1000,600);else if(this.im.background)c.drawImage(this.im.background,160,0,432,224,0,0,1000,560);c.fillStyle=index===2?'#35414b88':(index===1?'#1e293833':'#735d3a22');c.fillRect(0,0,1000,600);if(index===2&&!(this.im.bedside||this.im.stage3Normal)){c.fillStyle='#655d6a';c.fillRect(560,510,440,90);c.strokeStyle='#a697a333';for(let x=565;x<1000;x+=8){c.beginPath();c.moveTo(x,510);c.lineTo(x+10,600);c.stroke();}c.fillStyle='#293137';c.fillRect(0,290,85,250);}else if(index===0){c.fillStyle='#393e40';c.fillRect(63,485,50,85);c.fillRect(860,485,55,85);}
- let im=index===2?this.im.paws:(index===1?(this.im.socks||this.im.sneakers):this.im.sneakers);if(im){c.drawImage(im,160,0,160,256,290,index===2?-30:-65,400,640);c.drawImage(im,320,0,160,256,710,index===2?87:58,310,496);}for(let i=0;i<30;i++){let n={dir:i%2?1:-1,x:i*39};this.tiny(c,n,25+i*32,568-(i%3)*6,1.2);}c.restore();}
- cutscene(index,t,roster=[]){const c=this.base(),q=Math.max(0,Math.min(1,t/8)),fade=Math.max(0,Math.min(1,(t-2.4)/3)),startKey=index===0?'stage1':'stage2',endKey=index===0?'stage2':'stage3';
+ tiny(c,n,x,y,scale=1){c.save();c.translate(x,y);if(n.dir<0)c.scale(-1,1);c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';if(this.im.tiniesHd){const v=n.v!=null?n.v:(n.variant!=null?n.variant:0);const col=(Math.floor(n.x/19)%4+4)%4,row=1;const ww=30*scale,hh=30*scale;c.drawImage(this.im.tiniesHd,(v*4+col)*128,row*128,128,128,-ww/2,-hh+hh*(4/128),ww,hh);}else if(this.im.tinies){c.imageSmoothingEnabled=false;const col=(Math.floor(n.x/19)%4+4)%4,row=1;const ww=18*scale,hh=27*scale;c.drawImage(this.im.tinies,col*48,row*64,48,64,-ww/2,-hh,ww,hh);}else{c.imageSmoothingEnabled=false;c.drawImage(this.im.background,0,272+(Math.floor(n.x/4)%12)*32,32,32,-4*scale,-8*scale,8*scale,8*scale);}c.restore();}
+ floorPreview(index){let c=this.base();c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';if(index===2&&(this.im.bedside||this.im.stage3Normal))c.drawImage(this.im.bedside||this.im.stage3Normal,0,0,1000,600);else if(index===1&&this.im.stage2Normal)c.drawImage(this.im.stage2Normal,0,0,1000,600);else if(this.im.stage1Normal)c.drawImage(this.im.stage1Normal,0,0,1000,600);else if(this.im.background)c.drawImage(this.im.background,160,0,432,224,0,0,1000,560);c.fillStyle=index===2?'#35414b88':(index===1?'#1e293833':'#735d3a22');c.fillRect(0,0,1000,600);if(index===2&&!(this.im.bedside||this.im.stage3Normal)){c.fillStyle='#655d6a';c.fillRect(560,510,440,90);c.strokeStyle='#a697a333';for(let x=565;x<1000;x+=8){c.beginPath();c.moveTo(x,510);c.lineTo(x+10,600);c.stroke();}c.fillStyle='#293137';c.fillRect(0,290,85,250);}else if(index===0&&!this.im.stage1Normal){c.fillStyle='#393e40';c.fillRect(63,485,50,85);c.fillRect(860,485,55,85);}
+ const skin=index===2?'paws':(index===1?'socks':(g.__cunjieSelectedShoe||'aj5'));
+ const hdFront=this.im.hdPose3&&this.im.hdPose3[skin],hdBack=this.im.hdPose6&&this.im.hdPose6[skin];
+ let im=index===2?this.im.paws:(index===1?(this.im.socks||this.im.sneakers):this.im.sneakers);
+ if(hdFront)c.drawImage(hdFront,0,0,hdFront.width,hdFront.height,290,index===2?-30:-65,400,640);
+ else if(im){c.imageSmoothingEnabled=false;c.drawImage(im,160,0,160,256,290,index===2?-30:-65,400,640);c.imageSmoothingEnabled=true;}
+ if(hdBack)c.drawImage(hdBack,0,0,hdBack.width,hdBack.height,710,index===2?87:58,310,496);
+ else if(im){c.imageSmoothingEnabled=false;c.drawImage(im,320,0,160,256,710,index===2?87:58,310,496);c.imageSmoothingEnabled=true;}
+ for(let i=0;i<30;i++){let n={dir:i%2?1:-1,x:i*39,v:i%4};this.tiny(c,n,25+i*32,568-(i%3)*6,1.2);}c.restore();}
+ cutscene(index,t,roster=[]){const c=this.base();c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';const q=Math.max(0,Math.min(1,t/8)),fade=Math.max(0,Math.min(1,(t-2.4)/3)),startKey=index===0?'stage1':'stage2',endKey=index===0?'stage2':'stage3';
  const a=this.im[startKey+'Normal']||this.im.bedside||this.im.stage1Normal,b=this.im[endKey+'Normal']||this.im.bedside||this.im.stage1Normal;
  const drift=(x,k)=>{if(x)c.drawImage(x,Math.round(k*45),0,x.width-Math.round(k*45),x.height,0,0,1000,600);};
  drift(a,q*.27);c.globalAlpha=fade;drift(b,Math.max(0,1-q)*.17);c.globalAlpha=1;
- // Shoes and socks are supplied by the original 3.3 atlas, without identity replacements.
+ const shoe=g.__cunjieSelectedShoe||'aj5';
  if(index===0){
   const out=Math.max(0,1-t/4.6),incoming=Math.max(0,Math.min(1,(t-3)/2.3));
-  c.globalAlpha=out;if(this.im.sneakers)c.drawImage(this.im.sneakers,160,0,160,256,328,-80-Math.min(1,t/3)*320,310,495);c.globalAlpha=incoming;
-  if(this.im.socks)c.drawImage(this.im.socks,0,0,160,256,350,-200+Math.max(0,t-3)*72,340,535);c.globalAlpha=1;
+  const hdShoe=this.im.hdPose3&&this.im.hdPose3[shoe],hdSock=this.im.hdPose0&&this.im.hdPose0.socks;
+  c.globalAlpha=out;
+  if(hdShoe)c.drawImage(hdShoe,0,0,hdShoe.width,hdShoe.height,328,-80-Math.min(1,t/3)*320,310,495);
+  else if(this.im.sneakers)c.drawImage(this.im.sneakers,160,0,160,256,328,-80-Math.min(1,t/3)*320,310,495);
+  c.globalAlpha=incoming;
+  if(hdSock)c.drawImage(hdSock,0,0,hdSock.width,hdSock.height,350,-200+Math.max(0,t-3)*72,340,535);
+  else if(this.im.socks)c.drawImage(this.im.socks,0,0,160,256,350,-200+Math.max(0,t-3)*72,340,535);
+  c.globalAlpha=1;
  }else{
   const out=Math.max(0,1-t/4.6),incoming=Math.max(0,Math.min(1,(t-3)/2.3));
-  c.globalAlpha=out;if(this.im.socks)c.drawImage(this.im.socks,160,0,160,256,320,-110-Math.min(1,t/3)*250,340,535);c.globalAlpha=incoming;
-  if(this.im.paws)c.drawImage(this.im.paws,0,0,160,256,338,-220+Math.max(0,t-3)*73,400,640);c.globalAlpha=1;
+  const hdSock=this.im.hdPose3&&this.im.hdPose3.socks,hdPaw=this.im.hdPose0&&this.im.hdPose0.paws;
+  c.globalAlpha=out;
+  if(hdSock)c.drawImage(hdSock,0,0,hdSock.width,hdSock.height,320,-110-Math.min(1,t/3)*250,340,535);
+  else if(this.im.socks)c.drawImage(this.im.socks,160,0,160,256,320,-110-Math.min(1,t/3)*250,340,535);
+  c.globalAlpha=incoming;
+  if(hdPaw)c.drawImage(hdPaw,0,0,hdPaw.width,hdPaw.height,338,-220+Math.max(0,t-3)*73,400,640);
+  else if(this.im.paws)c.drawImage(this.im.paws,0,0,160,256,338,-220+Math.max(0,t-3)*73,400,640);
+  c.globalAlpha=1;
  }
- if(roster.length){const count=Math.min(18,roster.length);for(let k=0;k<count;k++){let x=80+k*45+(index===0?10:28)*q,y=545-(k%3)*7;this.tiny(c,{dir:k%2?1:-1,x:k*8},x,y,(index===0?1:.82)*(1-q*.20));}}
+ if(roster.length){const count=Math.min(18,roster.length);for(let k=0;k<count;k++){let x=80+k*45+(index===0?10:28)*q,y=545-(k%3)*7;this.tiny(c,{dir:k%2?1:-1,x:k*8,v:k%4},x,y,(index===0?1:.82)*(1-q*.20));}}
  c.restore();}
 
 }

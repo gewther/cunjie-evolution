@@ -16,6 +16,13 @@ ASSET_MIME = {
 }
 
 AJ6_HD_ASSETS = [f"assets/aj6-hd/{i}.webp" for i in range(11)]
+HD_SKIN_NAMES = ("aj5", "aj6", "qiaodan", "socks", "paws")
+SKIN_HD_ASSETS = {skin: [f"assets/{skin}-hd/{i}.webp" for i in range(11)] for skin in HD_SKIN_NAMES}
+HD_EXTRA_ASSETS = [
+    "assets/tinies/tinies-hd-v1.webp",
+    "assets/rooms/bedside-hd.webp",
+    "assets/rooms/bedside-hd-fever.webp",
+] + [p for skin in ("aj5", "qiaodan", "socks", "paws") for p in SKIN_HD_ASSETS[skin]]
 
 PATCHED_ASSETS = [
     "assets/rooftop/aj6.webp",
@@ -30,7 +37,7 @@ PATCHED_ASSETS = [
     "assets/impact/impact-atlas-v1.png",
     "assets/fenrir/fenrir-city-blue-hour.webp",
     "assets/fenrir/fenrir-motion-v3.png",
-] + AJ6_HD_ASSETS
+] + AJ6_HD_ASSETS + HD_EXTRA_ASSETS
 
 
 def to_data_uri(game_dir, rel_path):
@@ -112,8 +119,21 @@ def build_offline_html(game_dir=DIST, entry="impact.html"):
             raise RuntimeError(f"Offline freeLegacy syntax check failed: {res.stderr}")
     free_inlined = 'DATA["freeLegacy"]=' + json.dumps(free_html, ensure_ascii=False).replace("<", "\\u003c") + ";\n"
 
-    # Share the 11 HD AJ6 data URIs once on window.parent.DATA.aj6Hd (read by both story & free iframes).
-    aj6_hd_js = 'DATA["aj6Hd"]=' + json.dumps([uris[rel] for rel in AJ6_HD_ASSETS], ensure_ascii=False) + ";\n"
+    # Share HD assets once on window.parent.DATA (read by host previews, story & free iframes).
+    skin_hd_map = {skin: [uris[p] for p in paths] for skin, paths in SKIN_HD_ASSETS.items()}
+    room_hd_map = {
+        "rooftop-day": uris["assets/rooftop/day.webp"],
+        "rooftop-night": uris["assets/rooftop/night.webp"],
+        "bedroom-wood": uris["assets/rooms/bedroom-wood.webp"],
+        "warm": uris["assets/rooms/room-warm.webp"],
+        "rain": uris["assets/rooms/room-rain.webp"],
+    }
+    aj6_hd_js = (
+        f'DATA["aj6Hd"]={json.dumps([uris[rel] for rel in AJ6_HD_ASSETS], ensure_ascii=False, separators=(",", ":"))};\n'
+        f'DATA["tiniesHd"]={json.dumps(uris["assets/tinies/tinies-hd-v1.webp"], ensure_ascii=False, separators=(",", ":"))};\n'
+        f'DATA["skinHd"]={json.dumps(skin_hd_map, ensure_ascii=False, separators=(",", ":"))};\n'
+        f'DATA["rooms"]={json.dumps(room_hd_map, ensure_ascii=False, separators=(",", ":"))};\n'
+    )
 
     host3_js = inline_safe(open(os.path.join(game_dir, "scripts", "impact-host-3.js"), encoding="utf-8").read())
     fenrir_rel = "assets/fenrir/fenrir-motion-v3.png"

@@ -1,41 +1,75 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="2400" height="240" viewBox="0 0 2400 240">
 <defs>
- <linearGradient id="road" x2="0" y2="1"><stop stop-color="#182d3b"/><stop offset=".42" stop-color="#0c1b28"/><stop offset="1" stop-color="#08131e"/></linearGradient>
- <linearGradient id="car" x2="0" y2="1"><stop stop-color="#91aebb"/><stop offset=".5" stop-color="#496a7c"/><stop offset="1" stop-color="#1a3040"/></linearGradient>
- <linearGradient id="lamp" x2="0" y2="1"><stop stop-color="#e7d5a6"/><stop offset="1" stop-color="#6a8a9a"/></linearGradient>
- <pattern id="asphalt" width="43" height="17" patternUnits="userSpaceOnUse"><circle cx="4" cy="7" r=".7" fill="#a6c4d0" opacity=".16"/><circle cx="26" cy="12" r=".6" fill="#a6c4d0" opacity=".12"/><path d="M12 3l5 1M33 5l4-1" stroke="#8baab8" stroke-opacity=".12"/></pattern>
+ <linearGradient id="road" x2="0" y2="1"><stop stop-color="#172d3c"/><stop offset=".42" stop-color="#0b1a27"/><stop offset="1" stop-color="#06101a"/></linearGradient>
+ <linearGradient id="curb" x2="0" y2="1"><stop stop-color="#6e8b99"/><stop offset=".6" stop-color="#3c5664"/><stop offset="1" stop-color="#1b2e3b"/></linearGradient>
+ <linearGradient id="car" x2="0" y2="1"><stop stop-color="#a2bfcc"/><stop offset=".45" stop-color="#476a7d"/><stop offset="1" stop-color="#162938"/></linearGradient>
+ <linearGradient id="lamp" x2="0" y2="1"><stop stop-color="#ebd8a8"/><stop offset="1" stop-color="#5d7e8f"/></linearGradient>
+ <radialGradient id="lampGlow" cx=".5" cy="0" r="1"><stop stop-color="#7ce3f5" stop-opacity=".24"/><stop offset=".55" stop-color="#60c4d9" stop-opacity=".07"/><stop offset="1" stop-color="#60c4d9" stop-opacity="0"/></radialGradient>
+ <radialGradient id="warmPool" cx=".5" cy=".5" r=".5"><stop stop-color="#ffd584" stop-opacity=".28"/><stop offset="1" stop-color="#ffd584" stop-opacity="0"/></radialGradient>
+ <radialGradient id="tailPool" cx=".5" cy=".5" r=".5"><stop stop-color="#f26b62" stop-opacity=".25"/><stop offset="1" stop-color="#f26b62" stop-opacity="0"/></radialGradient>
+ <pattern id="asphalt" width="44" height="18" patternUnits="userSpaceOnUse">
+  <circle cx="4" cy="7" r=".7" fill="#a6c4d0" opacity=".18"/>
+  <circle cx="26" cy="12" r=".6" fill="#a6c4d0" opacity=".14"/>
+  <circle cx="38" cy="4" r=".5" fill="#7bd3e4" opacity=".10"/>
+  <path d="M12 3l5 1M33 5l4-1" stroke="#8baab8" stroke-opacity=".14"/>
+ </pattern>
 </defs>
 <!-- Continuous road plane: the near layer is locked 1:1 to the 150 m world -->
 <path d="M0 194H2400V240H0Z" fill="url(#road)"/>
-<path d="M0 194H2400V199H0Z" fill="#718b98" opacity=".68"/>
-<path d="M0 199H2400V202H0Z" fill="#d0dce0" opacity=".13"/>
+<rect x="0" y="194" width="2400" height="6" fill="url(#curb)" opacity=".88"/>
+<path d="M0 200H2400V202H0Z" fill="#d4e6ec" opacity=".18"/>
 <path d="M0 202H2400V240H0Z" fill="url(#asphalt)"/>
-<g fill="#6dc1d0" opacity=".13"><path d="M40 207q34-7 76 0t62 0q-12 8-54 7t-84-7Z"/><path d="M438 216q28-6 66 0t55 0q-9 7-48 7t-73-7Z"/><path d="M900 207q40-8 90 0t65 0q-14 8-70 8t-85-8Z"/><path d="M1350 214q38-7 78 0t62 0q-13 8-66 8t-74-8Z"/><path d="M1880 207q42-8 92 0t65 0q-14 8-70 8t-87-8Z"/><path d="M2240 216q28-6 66 0t55 0q-9 7-48 7t-73-7Z"/></g>
-<g stroke="#d5d8c7" stroke-opacity=".48" stroke-width="2"><path d="M20 228h42M104 228h42M188 228h42M272 228h42M356 228h42M440 228h42M524 228h42M608 228h42M692 228h42M776 228h42M860 228h42M944 228h42M1028 228h42M1112 228h42M1196 228h42M1280 228h42M1364 228h42M1448 228h42M1532 228h42M1616 228h42M1700 228h42M1784 228h42M1868 228h42M1952 228h42M2036 228h42M2120 228h42M2204 228h42M2288 228h42"/></g>
-<!-- Wet road around the y=228 contact band. Highlights sit just inside the shallow pools. -->
-<g fill="#061523" opacity=".58">
+<!-- Sidewalk planters & street trees (scaled <= 4m) -->
+<g fill="#0c2029" stroke="#365969" stroke-width="1" opacity=".88">
+ <rect x="470" y="188" width="22" height="6"/><rect x="850" y="188" width="22" height="6"/><rect x="1390" y="188" width="22" height="6"/><rect x="1860" y="188" width="22" height="6"/>
+</g>
+<g opacity=".82">
+ <path d="M480 188V163M860 188V165M1400 188V162M1870 188V165" stroke="#1b3038" stroke-width="2.4"/>
+ <circle cx="480" cy="156" r="11" fill="#14323c"/><circle cx="474" cy="158" r="8" fill="#1b434e"/><circle cx="486" cy="159" r="7.5" fill="#183b45"/>
+ <circle cx="860" cy="158" r="10.5" fill="#14323c"/><circle cx="855" cy="160" r="7.5" fill="#1c4550"/><circle cx="866" cy="161" r="7" fill="#173943"/>
+ <circle cx="1400" cy="155" r="11.5" fill="#14323c"/><circle cx="1394" cy="158" r="8" fill="#1c4550"/><circle cx="1406" cy="159" r="8" fill="#173a44"/>
+ <circle cx="1870" cy="158" r="10.5" fill="#14323c"/><circle cx="1864" cy="160" r="7.5" fill="#1b434e"/><circle cx="1876" cy="161" r="7" fill="#183b45"/>
+</g>
+<!-- Wet shopfront reflection bands & cyan/warm puddles -->
+<g fill="#6dc1d0" opacity=".16"><path d="M40 207q34-7 76 0t62 0q-12 8-54 7t-84-7Z"/><path d="M438 216q28-6 66 0t55 0q-9 7-48 7t-73-7Z"/><path d="M900 207q40-8 90 0t65 0q-14 8-70 8t-85-8Z"/><path d="M1350 214q38-7 78 0t62 0q-13 8-66 8t-74-8Z"/><path d="M1880 207q42-8 92 0t65 0q-14 8-70 8t-87-8Z"/><path d="M2240 216q28-6 66 0t55 0q-9 7-48 7t-73-7Z"/></g>
+<!-- Required 150m lane markings along y=228 -->
+<g stroke="#dce0cf" stroke-opacity=".54" stroke-width="2"><path d="M20 228h42M104 228h42M188 228h42M272 228h42M356 228h42M440 228h42M524 228h42M608 228h42M692 228h42M776 228h42M860 228h42M944 228h42M1028 228h42M1112 228h42M1196 228h42M1280 228h42M1364 228h42M1448 228h42M1532 228h42M1616 228h42M1700 228h42M1784 228h42M1868 228h42M1952 228h42M2036 228h42M2120 228h42M2204 228h42M2288 228h42"/></g>
+<!-- Wet puddles around y=228 contact band with mirror shimmer -->
+<g fill="#051320" opacity=".62">
  <path d="M142 226q38-4 83 0t50 1q-38 4-85 2t-48-3ZM545 225q44-3 90 0t46 0q-33 5-82 4t-54-4ZM1055 226q51-4 111 0t65 0q-44 6-112 4t-64-4ZM1560 227q42-5 91-1t67 0q-49 5-101 4t-57-3ZM2000 225q48-4 104 0t73 1q-46 7-113 4t-64-5Z"/>
 </g>
-<g fill="none" stroke="#88cbdf" stroke-width="1" opacity=".31">
+<g fill="none" stroke="#8fd2e6" stroke-width="1" opacity=".36">
  <path d="M153 227q45 3 82 0M567 225q30-1 72 1M1071 228q42 4 97 0m12-2h27M1576 228q47 2 72 0M2019 227q36 3 67 0m12-1 37 1"/>
 </g>
-<!-- 6 m street lamps, with one extra scale anchor beside the center-block car. -->
-<g stroke="url(#lamp)" stroke-width="4" fill="none"><path d="M334 194V103Q334 97 341 97H365M934 194V103Q934 97 941 97H965M1134 194V103Q1134 97 1141 97H1165M1534 194V103Q1534 97 1541 97H1565M2134 194V103Q2134 97 2141 97H2165"/></g>
-<g fill="#d8d6c0" opacity=".85"><path d="M360 94h30l5 7h-35Z"/><path d="M960 94h30l5 7h-35Z"/><path d="M1560 94h30l5 7h-35Z"/><path d="M2160 94h30l5 7h-35Z"/></g>
-<g fill="#83d7e8" opacity=".55"><path d="M365 101h24l-3 4h-18Z"/><path d="M965 101h24l-3 4h-18Z"/><path d="M1565 101h24l-3 4h-18Z"/><path d="M2165 101h24l-3 4h-18Z"/></g>
-<g fill="#79d8e9" opacity=".09"><ellipse cx="376" cy="108" rx="20" ry="4"/><ellipse cx="976" cy="108" rx="20" ry="4"/><ellipse cx="1176" cy="108" rx="20" ry="4"/><ellipse cx="1576" cy="108" rx="20" ry="4"/><ellipse cx="2176" cy="108" rx="20" ry="4"/></g>
-<!-- Traffic signals -->
-<g><path d="M568 194V136M1468 194V136" stroke="#8da6b3" stroke-width="3"/><rect x="558" y="132" width="20" height="38" rx="4" fill="#172b39" stroke="#7d9aa8" stroke-width="1.5"/><rect x="1458" y="132" width="20" height="38" rx="4" fill="#172b39" stroke="#7d9aa8" stroke-width="1.5"/><g><circle cx="568" cy="141" r="4" fill="#e46d62" opacity=".75"/><circle cx="568" cy="152" r="4" fill="#d9b76f" opacity=".65"/><circle cx="568" cy="163" r="4" fill="#70c9a4" opacity=".55"/><circle cx="1468" cy="141" r="4" fill="#e46d62" opacity=".75"/><circle cx="1468" cy="152" r="4" fill="#d9b76f" opacity=".65"/><circle cx="1468" cy="163" r="4" fill="#70c9a4" opacity=".55"/></g></g>
-<!-- Parked cars, 4.5 m reference length -->
-<g transform="translate(102 169)"><path d="M3 17L9 7Q13 1 25 0H51Q60 1 66 10L70 17V23H0V19Z" fill="url(#car)" stroke="#b4cbd3" stroke-opacity=".55"/><path d="M18 7Q22 2 29 2H48Q55 3 59 10H15Z" fill="#0d2230" stroke="#9dc0cc" stroke-opacity=".45"/><path d="M36 3V11" stroke="#a7c1cb" stroke-opacity=".45"/><path d="M2 16H68V20H2Z" fill="#132431"/><circle cx="16" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/><circle cx="55" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/><rect x="1" y="13" width="4" height="3" fill="#ffbf7c"/><rect x="66" y="13" width="4" height="3" fill="#e66e64"/></g>
-<g transform="translate(760 171) scale(.92 .92)"><path d="M3 17L9 7Q13 1 25 0H51Q60 1 66 10L70 17V23H0V19Z" fill="#536b7b" stroke="#a6bbc6" stroke-opacity=".55"/><path d="M18 7Q22 2 29 2H48Q55 3 59 10H15Z" fill="#0d2230"/><circle cx="16" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/><circle cx="55" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/></g>
-<g transform="translate(1300 169)"><path d="M3 17L9 7Q13 1 25 0H51Q60 1 66 10L70 17V23H0V19Z" fill="#617f8d" stroke="#b4cbd3" stroke-opacity=".55"/><path d="M18 7Q22 2 29 2H48Q55 3 59 10H15Z" fill="#0d2230"/><circle cx="16" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/><circle cx="55" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/></g>
-<g transform="translate(1960 171) scale(.92 .92)"><path d="M3 17L9 7Q13 1 25 0H51Q60 1 66 10L70 17V23H0V19Z" fill="#536b7b" stroke="#a6bbc6" stroke-opacity=".55"/><path d="M18 7Q22 2 29 2H48Q55 3 59 10H15Z" fill="#0d2230"/><circle cx="16" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/><circle cx="55" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/></g>
-<!-- Guardrails and bollards -->
-<g stroke="#819aa6" stroke-width="2" fill="none" opacity=".65"><path d="M620 181h106M620 188h106M620 181v13M646 181v13M672 181v13M698 181v13M726 181v13M1520 181h106M1520 188h106M1520 181v13M1546 181v13M1572 181v13M1598 181v13M1626 181v13"/></g>
-<g fill="none" stroke="#6bb3c3" stroke-opacity=".16">
- <path d="M375 198v13m2-11v6M974 198v14m2-9v5M1175 198v16m2-11v7M1575 198v13m2-9v5M2175 198v14m2-10v6"/>
+<!-- Volumetric street lamp light cones -->
+<g fill="url(#lampGlow)">
+ <polygon points="365,103 390,103 422,202 332,202"/><polygon points="965,103 990,103 1022,202 932,202"/>
+ <polygon points="1165,103 1190,103 1222,202 1132,202"/><polygon points="1565,103 1590,103 1622,202 1532,202"/>
+ <polygon points="2165,103 2190,103 2222,202 2132,202"/>
 </g>
-<g fill="#c4a875"><rect x="930" y="180" width="5" height="14"/><rect x="950" y="180" width="5" height="14"/><rect x="970" y="180" width="5" height="14"/><rect x="2130" y="180" width="5" height="14"/><rect x="2150" y="180" width="5" height="14"/><rect x="2170" y="180" width="5" height="14"/></g>
-<g stroke="#74bfd0" stroke-opacity=".22" stroke-width="1"><path d="M210 211h38M286 216h21M486 207h46M827 214h32M1060 211h57M1450 210h38M1740 216h34M2060 210h45M2300 214h28"/></g>
+<!-- 6m street lamps -->
+<g stroke="url(#lamp)" stroke-width="4" fill="none"><path d="M334 194V103Q334 97 341 97H365M934 194V103Q934 97 941 97H965M1134 194V103Q1134 97 1141 97H1165M1534 194V103Q1534 97 1541 97H1565M2134 194V103Q2134 97 2141 97H2165"/></g>
+<g fill="#dcdac4" opacity=".88"><path d="M360 94h30l5 7h-35Z"/><path d="M960 94h30l5 7h-35Z"/><path d="M1160 94h30l5 7h-35Z"/><path d="M1560 94h30l5 7h-35Z"/><path d="M2160 94h30l5 7h-35Z"/></g>
+<g fill="#8ee3f4" opacity=".72"><path d="M365 101h24l-3 4h-18Z"/><path d="M965 101h24l-3 4h-18Z"/><path d="M1165 101h24l-3 4h-18Z"/><path d="M1565 101h24l-3 4h-18Z"/><path d="M2165 101h24l-3 4h-18Z"/></g>
+<!-- Glowing transit shelter -->
+<g transform="translate(1780 165)">
+ <rect x="0" y="3" width="66" height="26" fill="#0d2331" opacity=".78" stroke="#5fb8cd" stroke-width="1"/>
+ <rect x="-4" y="0" width="74" height="4" rx="1.5" fill="#2c4f61"/>
+ <rect x="46" y="5" width="16" height="22" fill="#ffd98a" opacity=".52"/>
+ <rect x="6" y="7" width="32" height="14" fill="#63d9ed" opacity=".28"/>
+</g>
+<!-- Traffic signals with wet glow -->
+<g><path d="M568 194V136M1468 194V136" stroke="#8da6b3" stroke-width="3"/><rect x="558" y="132" width="20" height="38" rx="4" fill="#172b39" stroke="#7d9aa8" stroke-width="1.5"/><rect x="1458" y="132" width="20" height="38" rx="4" fill="#172b39" stroke="#7d9aa8" stroke-width="1.5"/><g><circle cx="568" cy="141" r="4" fill="#eb7368" opacity=".88"/><circle cx="568" cy="152" r="4" fill="#d9b76f" opacity=".68"/><circle cx="568" cy="163" r="4" fill="#70c9a4" opacity=".55"/><circle cx="1468" cy="141" r="4" fill="#eb7368" opacity=".88"/><circle cx="1468" cy="152" r="4" fill="#d9b76f" opacity=".68"/><circle cx="1468" cy="163" r="4" fill="#70c9a4" opacity=".55"/></g></g>
+<!-- Detailed parked cars with headlight/taillight pavement reflections -->
+<ellipse cx="96" cy="196" rx="22" ry="6" fill="url(#warmPool)"/><ellipse cx="172" cy="196" rx="18" ry="5" fill="url(#tailPool)"/>
+<g transform="translate(102 169)"><path d="M3 17L9 7Q13 1 25 0H51Q60 1 66 10L70 17V23H0V19Z" fill="url(#car)" stroke="#b4cbd3" stroke-opacity=".6"/><path d="M18 7Q22 2 29 2H48Q55 3 59 10H15Z" fill="#0d2230" stroke="#9dc0cc" stroke-opacity=".5"/><path d="M36 3V11M24 11H50" stroke="#a7c1cb" stroke-opacity=".42"/><path d="M2 16H68V20H2Z" fill="#132431"/><circle cx="16" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/><circle cx="55" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/><circle cx="16" cy="22" r="2" fill="#89a8b5"/><circle cx="55" cy="22" r="2" fill="#89a8b5"/><rect x="1" y="13" width="4.5" height="3" fill="#ffcf8c"/><rect x="65.5" y="13" width="4.5" height="3" fill="#f06e64"/></g>
+<g transform="translate(760 171) scale(.92 .92)"><path d="M3 17L9 7Q13 1 25 0H51Q60 1 66 10L70 17V23H0V19Z" fill="#536b7b" stroke="#a6bbc6" stroke-opacity=".55"/><path d="M18 7Q22 2 29 2H48Q55 3 59 10H15Z" fill="#0d2230"/><circle cx="16" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/><circle cx="55" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/><rect x="1" y="13" width="4" height="3" fill="#ffd28e"/><rect x="66" y="13" width="4" height="3" fill="#ee7268"/></g>
+<ellipse cx="1295" cy="196" rx="22" ry="6" fill="url(#warmPool)"/>
+<g transform="translate(1300 169)"><path d="M3 17L9 7Q13 1 25 0H51Q60 1 66 10L70 17V23H0V19Z" fill="#617f8d" stroke="#b4cbd3" stroke-opacity=".58"/><path d="M18 7Q22 2 29 2H48Q55 3 59 10H15Z" fill="#0d2230"/><circle cx="16" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/><circle cx="55" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/><rect x="1" y="13" width="4" height="3" fill="#ffcf8c"/><rect x="65.5" y="13" width="4.5" height="3" fill="#f06e64"/></g>
+<g transform="translate(1960 171) scale(.92 .92)"><path d="M3 17L9 7Q13 1 25 0H51Q60 1 66 10L70 17V23H0V19Z" fill="#536b7b" stroke="#a6bbc6" stroke-opacity=".55"/><path d="M18 7Q22 2 29 2H48Q55 3 59 10H15Z" fill="#0d2230"/><circle cx="16" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/><circle cx="55" cy="22" r="5" fill="#07111a" stroke="#a5bbc4" stroke-width="1.5"/><rect x="1" y="13" width="4" height="3" fill="#ffd28e"/><rect x="66" y="13" width="4" height="3" fill="#ee7268"/></g>
+<!-- Guardrails and bollards -->
+<g stroke="#819aa6" stroke-width="2" fill="none" opacity=".68"><path d="M620 181h106M620 188h106M620 181v13M646 181v13M672 181v13M698 181v13M726 181v13M1520 181h106M1520 188h106M1520 181v13M1546 181v13M1572 181v13M1598 181v13M1626 181v13"/></g>
+<g fill="none" stroke="#6bb3c3" stroke-opacity=".18"><path d="M375 198v13m2-11v6M974 198v14m2-9v5M1175 198v16m2-11v7M1575 198v13m2-9v5M2175 198v14m2-10v6"/></g>
+<g fill="#c9ae7b"><rect x="930" y="180" width="5" height="14" rx="1"/><rect x="950" y="180" width="5" height="14" rx="1"/><rect x="970" y="180" width="5" height="14" rx="1"/><rect x="2130" y="180" width="5" height="14" rx="1"/><rect x="2150" y="180" width="5" height="14" rx="1"/><rect x="2170" y="180" width="5" height="14" rx="1"/></g>
+<g stroke="#78c6d8" stroke-opacity=".25" stroke-width="1"><path d="M210 211h38M286 216h21M486 207h46M827 214h32M1060 211h57M1450 210h38M1740 216h34M2060 210h45M2300 214h28"/></g>
 </svg>

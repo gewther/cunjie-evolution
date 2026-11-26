@@ -23,6 +23,7 @@ BUILD_STEPS = [
     ("Free & Fenrir responsive mobile touch v1", ["node", "tools/build_free_touch.cjs"]),
     ("Wave 1 Immersion (ambience, haptics, camera, lens FX)", ["node", "tools/build_immersion.cjs"]),
     ("Unified HD & custom skin pack runtime", ["node", "tools/build_skin_runtime.cjs"]),
+    ("HD art overhaul runtime", ["node", "tools/build_art_v1.cjs"]),
     ("PWA manifest, icons & Service Worker", [sys.executable, "tools/build_pwa.py"]),
     ("Standalone offline single-file HTML", [sys.executable, "tools/build_offline_html.py"]),
 ]
@@ -34,6 +35,7 @@ TEST_STEPS = [
     ("Direct touch tests", ["node", "tools/test_direct.cjs"]),
     ("Free & Fenrir responsive touch tests", ["node", "tools/test_free_touch.cjs"]),
     ("Fenrir city scene tests", ["node", "tools/test_fenrir_scene.cjs"]),
+    ("HD art overhaul tests", ["node", "tools/test_art_hd.cjs"]),
     ("PWA manifest & Service Worker tests", ["node", "tools/test_pwa.cjs"]),
 ]
 
@@ -96,7 +98,11 @@ RELEASE_FILES = [
     "assets/icons/icon-192.png",
     "assets/icons/icon-512.png",
     "assets/icons/icon-512-maskable.png",
-] + [f"assets/aj6-hd/{i}.webp" for i in range(11)]
+] + [
+    "assets/tinies/tinies-hd-v1.webp",
+    "assets/rooms/bedside-hd.webp",
+    "assets/rooms/bedside-hd-fever.webp",
+] + [f"assets/{skin}-hd/{i}.webp" for skin in ("aj5", "aj6", "qiaodan", "socks", "paws") for i in range(11)]
 
 START_PY = '''"""Run the clean Cunjie v6.0 static release on localhost."""
 import argparse
@@ -212,10 +218,12 @@ def main():
                         help="Synchronize the Fenrir sources and rebuild the offline HTML from the tracked release")
     args = parser.parse_args()
     if args.from_release:
+        run_step("Free Mode & Fenrir wet-asphalt impact release sync", ["node", "tools/build_free_impact.cjs", "--release"])
         run_step("Fenrir Hunt release sync", ["node", "tools/build_fenrir.cjs", "--release"])
         run_step("Free & Fenrir responsive touch release sync", ["node", "tools/build_free_touch.cjs", "--release"])
         run_step("Wave 1 Immersion release sync", ["node", "tools/build_immersion.cjs", "--release"])
         run_step("Fenrir city release sync", ["node", "tools/build_fenrir_scene.cjs", "--release"])
+        run_step("HD art overhaul release sync", ["node", "tools/build_art_v1.cjs", "--release"])
         run_step("PWA release sync", [sys.executable, "tools/build_pwa.py", "--release"])
         run_step("Standalone offline HTML from release", [sys.executable, "tools/build_offline_html.py", "--release"])
         paths = [os.path.join("dist-release", "game", rel.removeprefix("dist/")) for rel in CHECK_SCRIPTS]

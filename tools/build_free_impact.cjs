@@ -4,7 +4,8 @@ const path = require('path');
 const vm = require('vm');
 
 const root = path.resolve(__dirname, '..');
-const file = path.join(root, 'dist', 'data', 'touch-v1-free.js');
+const gameDir = path.join(root, process.argv.includes('--release') ? 'dist-release/game' : 'dist');
+const file = path.join(gameDir, 'data', 'touch-v1-free.js');
 const raw = fs.readFileSync(file, 'utf8');
 const eq = raw.indexOf('=');
 const prefix = raw.slice(0, eq + 1);
