@@ -1,26 +1,26 @@
 # COLLAB.md — Cunjie Evolution / Fenrir collaboration whiteboard
 
-Last verified against `main`: `ce3a6cfe508ac4bd4df6dec2073eb8b7be6332be` (2026-11-26).
-This file is the handoff source of truth. Re-read it at the start of every work session; update it when work is merged or verified. If it conflicts with code, tests, CI or the latest merged commit, code and reproducible checks win.
+Last verified against `main`: `3e41b46` (2026-11-26, after merging PR #4 + PR #3).
+This file and `ROADMAP_DUAL_AI.md` are the shared handoff sources of truth. Re-read both at the start of every work session; update them when work is merged or priorities change. If docs conflict with code, tests, CI or the latest merged commit, code and reproducible checks win.
 
 ## 1. Roles and handoff
 
 ### ChatGPT — cloud engineering
 - Own architecture, bounded feature work, code review preparation, regression tests and developer documentation.
 - Work only on isolated `feat/*` or `fix/*` branches and submit Draft PRs.
-- Before work: inspect latest `main`, all open PRs, CI runs, README, this file and relevant design docs.
+- Before work: inspect latest `main`, all open PRs, CI runs, `README.md`, `COLLAB.md`, and `ROADMAP_DUAL_AI.md`.
 - Do not merge, push directly to `main`, deploy, change repository permissions/secrets, or edit `.github/workflows/deploy-pages.yml`.
 - Do not edit files currently reserved for an Antigravity local task. Coordinate by PR and exact file list; never assume local work has been pushed.
-- Do not claim browser, real-device or offline acceptance unless actually run and evidenced.
+- Keep verification fast and deterministic (build gate + Node regression tests + CI); do not waste time on heavy AI automated playtesting.
 
-### Antigravity — local lead and acceptance engineer
-- Own local workspace integration, browser inspection, real Android/iOS portrait and landscape QA, visual tuning, and high-frequency touch/UX fixes.
-- Own the current touch-sensitivity investigation in the local workspace. Before editing, verify the live call path from touch input through the runtime bundle; preserve a baseline and add regression coverage.
+### Antigravity — local lead and release engineer
+- Own local workspace integration, high-frequency touch/UX tuning, visual/asset integration, and conflict resolution.
+- Keep verification lean and deterministic (`python tools/build_all.py --from-release`, Node unit/regression tests, syntax checks, CI). Do not spend heavy time on AI automated browser walkthroughs; leave real-device feel and fun acceptance to the user.
 - After user approval, integrate reviewed PRs, run the full release build, sync the offline single-file HTML and local project, and handle Pages deployment.
 - Do not overwrite a ChatGPT branch or silently cherry-pick stale generated bundles. Report exact branch, commit and changed files when handing work back.
 
-### User — product owner
-- Own character/world direction, feature priority and approval for merges and public releases.
+### User — product owner & playtest lead
+- Own character/world direction, feature priority, **real-device playtest & feel/fun acceptance**, and approval for merges and public releases.
 - The GitHub Pages site is intentionally public by user decision. Public visibility does not authorize unreviewed merges or deployment.
 
 ## 2. Branch and PR protocol (anti-collision)
@@ -42,36 +42,32 @@ This file is the handoff source of truth. Re-read it at the start of every work 
 
 ## 4. Verified repository baseline
 
-### Main and active review
-- Verified `main` SHA: `ce3a6cfe508ac4bd4df6dec2073eb8b7be6332be`.
-- Open Draft PR #3: `feat/fenrir-persona-v3`, head `2ac2341e5f0bb2f97a2619da8b8e41d6d502c3f0`. It adds selectable Fenrir AI preparation/recovery cadence profiles (playful / deliberate / classic), local preference persistence, regression tests and documentation.
-- PR #3 CI run `45800240935` failed only at generated release consistency: `dist-release/game/sw.js` had an old cache hash. The build and regression step passed. The expected hash reported by that exact CI build was `f0a1a1d7`; this Draft PR updates the generated service worker hash and must be rechecked by CI.
-- Do not merge PR #3 until CI is green and Antigravity has checked mobile tool-dock fit and manual takeover in browser/device.
+### Main and recently merged PRs
+- Verified `main` merge base: `3e41b46` (PR #4 + PR #3 merged on 2026-11-26).
+- **PR #4 (merged)**: `fix/mobile-touch-sensitivity` — added `src/free-touch-responsive.js`, `tools/build_free_touch.cjs`, `tools/test_free_touch.cjs` (10 tests), and normalized LF hashing in `tools/build_pwa.py` so Windows and Linux CI produce identical `sw.js` hashes.
+- **PR #3 (merged)**: `feat/fenrir-persona-v3` — added selectable Fenrir AI cadence profiles (`playful` / `deliberate` / `classic`), local preference persistence, `FENRIR_PERSONA_V3.md`, and `COLLAB.md`.
+- No active file locks remain after Stage 0 merge; next planned cloud milestone in `ROADMAP_DUAL_AI.md` is **P5.3 (contextual short dialogue & proactive banter with arbitration/cooldowns)**.
 
 ### PWA and offline
 - PWA artifacts are present: `dist-release/game/manifest.webmanifest`, `dist-release/game/sw.js`, `dist-release/game/scripts/pwa.js`, `tools/build_pwa.py`, and `tools/test_pwa.cjs`.
-- The service worker precaches a core asset set at install, can warm the full asset list through `CACHE_ALL`, and applies network-first navigation, cache-first images, and stale-while-revalidate scripts/data. These are two tiers of precache/warmup strategy and fetch behavior within one versioned Cache Storage cache; do not describe them as two separate physical cache databases.
-- PWA manifest/service-worker tests exist in `tools/build_all.py`. Code-level offline fallback is covered by tests; actual installability and airplane-mode behavior still need browser/device acceptance.
-- `README.md` currently says deployment is gated by `ALLOW_PUBLIC_GITHUB_PAGES=true`, but the current `.github/workflows/deploy-pages.yml` has no such guard and deploys on pushes to `main`. Treat the workflow as authoritative; do not modify it. The README statement needs a documentation correction in a separate reviewed change.
+- The service worker precaches a core asset set at install, can warm the full asset list through `CACHE_ALL`, and applies network-first navigation, cache-first images, and stale-while-revalidate scripts/data within one versioned Cache Storage cache (`bf1bedb5`).
+- `tools/build_pwa.py` normalizes `\r\n` to `\n` for text assets when computing `CACHE_NAME`, keeping Windows and Ubuntu CI builds byte-identical.
+- `README.md` currently mentions `ALLOW_PUBLIC_GITHUB_PAGES=true`, while `.github/workflows/deploy-pages.yml` deploys on pushes to `main`. Treat the workflow as authoritative and do not modify it without user approval.
 
-### Touch sensitivity — Antigravity-owned investigation
-- Antigravity reports sluggish free/Fenrir touch drag and identifies candidate limits in `src/touch-vertical.js`: gain `0.8 × clamp(sensitivity, 0.5, 1.25)`, per-event target delta capped at `220 px/s`, a `±24 px` target window while the foot is airborne, and the vertical controller's downward speed cap of `130 px/s` (upward cap `170 px/s`).
-- These values are confirmed in that source file. The complete production call path from this class into the current free/Fenrir release bundle has not yet been independently verified from the cloud checkout. Antigravity owns local call-path verification, real-device reproduction and the fix.
-- Until Antigravity hands back a branch/PR, ChatGPT must not edit `src/touch-vertical.js`, `dist-release/game/data/touch-v1-free.js`, or touch event wiring in gameplay/host files.
+### Touch sensitivity — resolved in Stage 0 (Antigravity-maintained)
+- Free Mode and Fenrir Mode now run `src/free-touch-responsive.js` (keeping legacy `src/touch-vertical.js` untouched so `test_touch.cjs` and `test_direct.cjs` remain green).
+- Future touch feel tweaks stay Antigravity-owned based on the user's real-device playtest feedback; ChatGPT should avoid editing `src/free-touch-responsive.js`, `src/touch-vertical.js`, or touch wiring in `dist-release/game/data/touch-v1-free.js`.
 
-## 5. Rolling roadmap (verify before selecting work)
-- **P5 Persona:** V3 cadence PR is under review. Next: interaction intent and short contextual dialogue, with arbitration/cooldowns; do not invent a general learning AI.
-- **P6 Physical presence:** grounded weight, mechanical inertia, contact effects and cinematic camera. Keep performance budgets and reduced-motion/low-effects support.
-- **P7 Playability:** non-destructive interaction, free exploration, settings/accessibility and clearer onboarding.
-- **P8 Reliability:** maintain and test the existing PWA/offline path; optimize load/performance, regression and cross-device behavior. PWA implementation already exists, so do not start a duplicate PWA project.
-- Reorder based on bugs, player feedback, CI and actual acceptance evidence. Prefer one small, reviewable increment over a broad rewrite.
+## 5. Rolling roadmap
+- See `ROADMAP_DUAL_AI.md` for the complete P5–P9 shared plan, file ownership lock matrix, and milestone DoDs.
+- Current next cloud item for ChatGPT: **P5.3 — Contextual short dialogue & proactive banter with cooldown/anti-repeat arbitration** (keeping playful, arrogant teenage-boy Fenrir tone and non-lethal outcomes).
+- Reorder based on the user's real-device playtest feedback. Prefer one small, reviewable increment over a broad rewrite.
 
 ## 6. Per-task handoff checklist
 - [ ] State the base `main` SHA and inspect open PRs.
-- [ ] Name the owner and reserved files.
-- [ ] Implement the smallest useful change with tests and docs.
-- [ ] Run `python tools/build_all.py --from-release` when execution environment permits.
-- [ ] Verify no root-absolute asset paths and inspect generated release diffs.
-- [ ] Report CI, browser/device and offline checks separately.
-- [ ] Update this file after a merge or newly verified milestone.
-- [ ] Leave merge and deployment to the user-approved local handoff.
+- [ ] Name the owner and reserved files (verify zero collision).
+- [ ] Implement the smallest useful change with unit/regression tests and docs.
+- [ ] Run `python tools/build_all.py --from-release` (all 7+ regression suites + syntax check + zero `dist-release/game` diff in CI).
+- [ ] Verify no root-absolute asset paths (`(?<![.])/assets/`).
+- [ ] Leave real-device playtest/fun acceptance, `main` merge, and Pages deployment to the user-approved workflow.
+- [ ] Update `COLLAB.md` / `ROADMAP_DUAL_AI.md` after a merge or priority change.
