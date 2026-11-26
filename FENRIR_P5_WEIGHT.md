@@ -19,3 +19,14 @@ Before merging, visually compare soft/firm landings, repeated landings, horizont
 The existing autonomous movement controller is retained. A session-local director tracks AI handoffs, manual interruptions, active autonomous time, and charge/overdrive transitions. It emits context-specific lines through the existing speech arbitration state, with a five-second minimum interval and a twelve-second idle interval. Existing gameplay lines have priority. The director respects the auto-dialogue preference and resets when the simulation clock restarts. It adds no new combat or physics commands and does not persist data across reloads. Inspect the state with `window.__fenrirPersona()` in the game iframe.
 
 The build normalizes CRLF/LF in embedded controls and bridge sources before serializing them, to keep Windows and Linux release builds identical.
+
+## Persona V2 — local cross-run memory
+- Stores only aggregate game counters (runs, completed runs, AI handoffs, manual interruptions, estimated AI-active simulation seconds) under the separate, versioned localStorage key `cunjie-fenrir-persona-v2`.
+- No account identifiers, chat logs, network calls, server-side storage, or modification to the existing save schema.
+- The tool menu exposes “角色记忆：开/关” and “清空角色记忆”. Turning it off also clears the stored counters; clearing the memory does not clear the game save. If browser storage is blocked, the game continues with in-memory state only.
+- A returning-player line is available when a prior recorded run includes an AI handoff. No history is invented when the prior counters are empty.
+- Saves happen at meaningful transitions, every ten simulation seconds when dirty, and when the page is hidden or leaves. Counts are bounded and malformed stored values are sanitized.
+- Debug inspection: `window.__fenrirMemory()` inside the Fenrir iframe. It is separate from `window.__fenrirPersona()`, which remains the session-local dialogue state.
+- New regression coverage: persistence and reloading, no per-frame writes, prior-run dialogue, reset/clear/disable, malformed storage and storage failure.
+
+Browser acceptance: enable AI, take control back, return to the title or reload the same origin, then check that prior-play dialogue is available. Toggle off and reload; the memory remains disabled when storage is writable. Clear it without changing other saves. Check that the two additional buttons fit the collapsed tool menu on mobile. This is a rule-driven game feature, not a general-purpose learning AI.
