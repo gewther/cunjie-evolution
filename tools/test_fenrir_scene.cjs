@@ -9,8 +9,8 @@ const game = path.join(root, 'dist-release', 'game');
 const read = (dir, file) => fs.readFileSync(path.join(dir, file), 'utf8');
 const host = read(game, 'scripts/impact-host-3.js');
 const scene = read(game, 'scripts/fenrir-scene-v1.js');
-const controls = read(root, 'src/fenrir-controls.js');
-const bridge = read(root, 'src/fenrir-scene-bridge.js');
+const controls = read(root, 'src/fenrir-controls.js').replace(/\r\n/g, '\n');
+const bridge = read(root, 'src/fenrir-scene-bridge.js').replace(/\r\n/g, '\n');
 assert.equal(scene, read(root, 'src/fenrir-scene-v1.js'));
 
 const names = ['far', 'mid', 'near'];
@@ -85,7 +85,32 @@ function createScene({textureLimit = 4096, failMid = false} = {}) {
  };
 }
 
+function testPersona() {
+ const sandbox = {fenrirCity: false};
+ vm.runInNewContext(controls, sandbox);
+ const p = sandbox.createFenrirPersona();
+ const input = {clock: 0, enabled: true, active: true, paused: false, finished: false, charge: 18, overdrive: false, dialogue: true, busy: false};
+ const step = (clock, overrides = {}) => p.update({...input, clock, ...overrides});
+ assert.equal(step(0, {busy: true}), null);
+ assert.equal(step(1).kind, 'takeover');
+ assert.equal(p.status().handoffs, 1);
+ assert.equal(step(2, {enabled: false}), null);
+ assert.equal(step(6, {enabled: false}).kind, 'return');
+ assert.equal(p.status().interruptions, 1);
+ assert.equal(step(7, {busy: true}), null);
+ assert.equal(step(11).kind, 'takeover');
+ assert.equal(p.status().handoffs, 2);
+ assert.equal(step(12, {charge: 100, paused: true}), null);
+ assert.equal(step(16, {charge: 100}).kind, 'ready');
+ assert.equal(step(17, {overdrive: true, dialogue: false}), null);
+ assert.equal(step(22, {overdrive: true}), null);
+ assert.equal(step(23, {overdrive: false}).kind, 'recovered');
+ assert.equal(step(0.1, {enabled: false}), null);
+ assert.equal(p.status().handoffs, 0);
+ assert.equal(p.status().interruptions, 0);
+}
 async function main() {
+ testPersona();
  const env = createScene();
  const {api, status, textures, calls, urls, window, pose} = env;
  await new Promise(resolve => setImmediate(resolve));
