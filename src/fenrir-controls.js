@@ -1,4 +1,144 @@
 /* Fenrir-only controls inside the legacy game iframe. */
+// Local, bounded gameplay counters; no identifying data, network or shared save changes.
+function createFenrirMemory(storage) {
+ const key = 'cunjie-fenrir-persona-v2';
+ const fields = ['runs', 'completed', 'handoffs', 'interruptions', 'aiSeconds'];
+ const blank = () => ({version: 2, runs: 0, completed: 0, handoffs: 0, interruptions: 0, aiSeconds: 0});
+ const limit = 100000000;
+ let data = blank(), enabled = true, available = !!storage, dirty = false;
+ let lastClock = null, lastEnabled = false, started = false, completed = false, lastSave = 0;
+ function clean(raw) {
+  const out = blank();
+  if (!raw || raw.version !== 2) return out;
+  for (const k of fields) if (typeof raw[k] === 'number' && Number.isFinite(raw[k])) out[k] = Math.min(limit, Math.max(0, k === 'aiSeconds' ? raw[k] : Math.floor(raw[k])));
+  return out;
+ }
+ try {
+  const raw = JSON.parse(storage?.getItem(key) || 'null');
+  if (raw?.version === 2) {
+   enabled = raw.enabled !== false;
+   if (enabled) data = clean(raw);
+  }
+ } catch { available = false; }
+ // Snapshot of prior runs, used for dialogue, not fabricated relationship history.
+ let prior = {...data};
+ function save() {
+  if (!dirty || !storage) return;
+  try {
+   storage.setItem(key, JSON.stringify({...data, aiSeconds: Math.round(data.aiSeconds * 100) / 100, enabled}));
+   available = true; dirty = false;
+  } catch { available = false; }
+ }
+ function add(k, n = 1) {
+  data[k] = Math.min(limit, data[k] + n); dirty = true;
+ }
+ function record(input) {
+  const clock = Number(input.clock);
+  if (!Number.isFinite(clock) || clock < 0) return;
+  const reset = lastClock !== null && clock < lastClock;
+  const dt = lastClock === null || reset ? 0 : Math.min(0.1, Math.max(0, clock - lastClock));
+  if (reset) { started = false; completed = false; lastSave = clock; prior = {...data}; }
+  lastClock = clock;
+  const ai = !!input.enabled;
+  if (!enabled) { lastEnabled = ai; return; }
+  if (input.finished && started && !completed) {
+   completed = true; add('completed'); save();
+  }
+  if (!input.active || input.paused || input.finished) return;
+  if (!started) {
+   started = true; add('runs'); if (ai) add('handoffs'); lastEnabled = ai; save();
+  } else if (ai !== lastEnabled) {
+   add(ai ? 'handoffs' : 'interruptions'); lastEnabled = ai; save();
+  }
+  if (ai && dt > 0) add('aiSeconds', dt);
+  if (clock - lastSave >= 10) { lastSave = clock; save(); }
+ }
+ function clear() {
+  data = blank(); prior = blank(); dirty = true; save();
+  // Keep the current run's baseline: clearing does not invent another visit.
+ }
+ function setEnabled(next) {
+  const value = !!next;
+  if (enabled === value) return;
+  enabled = value;
+  if (!enabled) clear();
+  else { dirty = true; save(); }
+ }
+ function status() { return {...data, aiSeconds: Math.round(data.aiSeconds * 10) / 10, enabled, available}; }
+ return {record, save, clear, setEnabled, status, prior: () => ({...prior})};
+}
+
+// Session-local persona director. No new movement or collision commands.
+function createFenrirPersona(memory = null) {
+ let phase = 'manual', handoffs = 0, interruptions = 0, lastClock = 0;
+ let pending = null, lastLineAt = -Infinity, nextIdleAt = 0;
+ let observed = 0, lastChargeBand = false, lastOverdrive = false;
+ const pools = {
+  takeover: ['终于轮到我了。看好了。', '交给我？那你就坐稳。', '又把控制权交给我啦？'],
+  return: ['又想自己试试？行吧，轮到你了。', '抢得真快。我还没玩够呢。', '好好好，你来。我看着。'],
+  observe: ['雨声还挺好听的。', '这条街，我已经认熟了。', '你还在看吗？我可没走神。'],
+  ready: ['嗯，核心充满了。要不要试试？', '电量刚刚好。你看见了吗？'],
+  overdrive: ['核心状态确认。让我活动一下。'],
+  recovered: ['冷却完成。刚刚的动静还不错吧？']
+ };
+ const cursor = Object.create(null);
+ function queue(kind, clock) {
+  pending = {kind, at: clock};
+ }
+ function reset(clock = 0) {
+  phase = 'manual'; pending = null; lastClock = clock;
+  lastLineAt = -Infinity; nextIdleAt = clock + 9;
+  observed = 0; lastChargeBand = false; lastOverdrive = false;
+  handoffs = 0; interruptions = 0;
+  for (const key of Object.keys(cursor)) delete cursor[key];
+ }
+ function setEnabled(enabled, clock) {
+  const next = enabled ? 'autonomous' : 'manual';
+  if (phase === next) return;
+  phase = next;
+  if (enabled) { handoffs++; queue('takeover', clock); }
+  else { interruptions++; queue('return', clock); }
+  nextIdleAt = clock + 9;
+ }
+ function update(input) {
+  const clock = Number(input.clock);
+  if (!Number.isFinite(clock)) return null;
+  if (clock < lastClock) reset(clock);
+  const dt = Math.max(0, Math.min(0.1, clock - lastClock));
+  lastClock = clock;
+  setEnabled(!!input.enabled, clock);
+  if (!input.active || input.paused || input.finished) return null;
+  if (phase === 'autonomous') observed += dt;
+  const charged = Number(input.charge) >= 100 && !input.overdrive;
+  if (phase === 'autonomous') {
+   if (input.overdrive && !lastOverdrive) queue('overdrive', clock);
+   else if (!input.overdrive && lastOverdrive) queue('recovered', clock);
+   else if (charged && !lastChargeBand) queue('ready', clock);
+   else if (!pending && clock >= nextIdleAt) queue('observe', clock);
+  }
+  lastChargeBand = charged;
+  lastOverdrive = !!input.overdrive;
+  if (pending && clock - pending.at > 8) pending = null;
+  if (!input.dialogue) { pending = null; return null; }
+  if (!pending || input.busy || clock - lastLineAt < 5) return null;
+  const kind = pending.kind;
+  pending = null;
+  const history = memory?.prior();
+  const pool = kind === 'takeover' && handoffs === 1 && history?.handoffs > 0
+   ? ['又见面了。今天也交给我？', '上回你也让我接管过。还记得吧？']
+   : pools[kind];
+  const index = (cursor[kind] || 0) % pool.length;
+  cursor[kind] = index + 1;
+  lastLineAt = clock;
+  nextIdleAt = clock + 12;
+  return {kind, text: pool[index]};
+ }
+ function status() {
+  return {phase, handoffs, interruptions, observedSeconds: Math.round(observed * 10) / 10, pending: pending?.kind || null};
+ }
+ return {setEnabled, update, reset, status};
+}
+
 if (fenrirCity) {
  const shell = document.getElementById('xl-shell');
  const drawer = document.getElementById('xl-drawer');
@@ -69,6 +209,35 @@ if (fenrirCity) {
   pace: preferences.autoPace, smart: preferences.autoSmart
  }) : null;
  const hunt = window.xlFenrirState;
+ let personaStorage = null;
+ try { personaStorage = window.localStorage; } catch {}
+ const memory = createFenrirMemory(personaStorage);
+ const persona = createFenrirPersona(memory);
+ window.__fenrirMemory = () => memory.status();
+ window.addEventListener('pagehide', () => memory.save());
+ document.addEventListener('visibilitychange', () => { if (document.hidden) memory.save(); });
+ function personaDialogueEnabled() {
+  try {
+   const prefs = JSON.parse(localStorage.getItem('cunjie-stomp-impact-v1'))?.prefs || {};
+   return prefs.autoDialogue !== false && prefs.autoDialogue !== 0 && prefs.autoDialogue !== 'off';
+  } catch { return preferences.autoDialogue !== false; }
+ }
+ function showPersonaLine(line) {
+  const bubble = document.getElementById('xl-bubble');
+  const text = document.getElementById('xl-bubble-line');
+  const label = document.getElementById('xl-bubble-context');
+  if (!line || !bubble || !text) return;
+  // Share the existing speech arbiter: gameplay, wave and result lines take priority.
+  if (hunt.speakLeft > 0 || hunt.totalClock - hunt.lastSpeakAt < 2.1) return;
+  text.textContent = line.text;
+  if (label) label.textContent = '芬里尔 · 自主意识';
+  hunt.speakLeft = 3.2;
+  hunt.speakPriority = 1;
+  hunt.lastSpeakAt = hunt.totalClock;
+  bubble.classList.add('is-speaking');
+  bubble.classList.toggle('overdrive-voice', !!hunt.overdrive);
+  bubble.setAttribute('aria-hidden', 'false');
+ }
  let aimX = 0;
  let aimY = 0;
  const commands = {
@@ -85,10 +254,29 @@ if (fenrirCity) {
  aiButton.id = 'fn-auto-btn';
  aiButton.type = 'button';
  dock.prepend(aiButton);
+ const memoryButton = document.createElement('button');
+ memoryButton.type = 'button';
+ memoryButton.id = 'fn-memory-toggle';
+ const clearMemoryButton = document.createElement('button');
+ clearMemoryButton.type = 'button';
+ clearMemoryButton.id = 'fn-memory-clear';
+ clearMemoryButton.textContent = '清空角色记忆';
+ clearMemoryButton.title = '清空芬里尔本地游玩统计，不影响游戏存档';
+ function syncMemoryButtons() {
+  const m = memory.status();
+  memoryButton.textContent = '角色记忆：' + (m.enabled ? (m.available ? '开' : '仅本局') : '关');
+  memoryButton.setAttribute('aria-pressed', String(m.enabled));
+  clearMemoryButton.disabled = !m.enabled;
+ }
+ memoryButton.onclick = () => { memory.setEnabled(!memory.status().enabled); syncMemoryButtons(); };
+ clearMemoryButton.onclick = () => { memory.clear(); syncMemoryButtons(); };
+ dock.append(memoryButton, clearMemoryButton);
+ syncMemoryButtons();
 
  function setPilot(enabled) {
   if (pilot?.enabled !== enabled) {
    pilot?.setEnabled(enabled, commands);
+   if (pilot) persona.setEnabled(enabled, hunt.totalClock);
    if (enabled && pilot) {
     realmTouchDisown();
     touchmode = false;
@@ -123,6 +311,8 @@ if (fenrirCity) {
 
   let lastClock = 0;
   window.__fenrirAutopilot = () => pilot.status();
+  window.__fenrirPersona = () => persona.status();
+  let dialogueClock = -Infinity, dialogueAllowed = preferences.autoDialogue !== false;
   const updatePaw = update_paw;
   update_paw = function() {
    if (pilot.enabled && active && !pause && !tr && !hunt.finished) {
@@ -141,7 +331,22 @@ if (fenrirCity) {
     my = aimY;
     paw_follows_mouse = true;
    }
-   return updatePaw.apply(this, arguments);
+   const output = updatePaw.apply(this, arguments);
+   if (hunt.totalClock < dialogueClock || hunt.totalClock - dialogueClock >= 1) {
+    dialogueAllowed = personaDialogueEnabled();
+    dialogueClock = hunt.totalClock;
+   }
+   memory.record({clock: hunt.totalClock, enabled: pilot.enabled, active,
+     paused: pause || tr, finished: hunt.finished});
+   const line = persona.update({
+    clock: hunt.totalClock, enabled: pilot.enabled, active,
+    paused: pause || tr, finished: hunt.finished,
+    charge: hunt.thrill, overdrive: hunt.overdrive,
+    dialogue: dialogueAllowed,
+    busy: hunt.speakLeft > 0 || hunt.totalClock - hunt.lastSpeakAt < 2.1
+   });
+   showPersonaLine(line);
+   return output;
   };
  }
 

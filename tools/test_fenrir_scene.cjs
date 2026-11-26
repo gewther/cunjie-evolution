@@ -9,8 +9,8 @@ const game = path.join(root, 'dist-release', 'game');
 const read = (dir, file) => fs.readFileSync(path.join(dir, file), 'utf8');
 const host = read(game, 'scripts/impact-host-3.js');
 const scene = read(game, 'scripts/fenrir-scene-v1.js');
-const controls = read(root, 'src/fenrir-controls.js');
-const bridge = read(root, 'src/fenrir-scene-bridge.js');
+const controls = read(root, 'src/fenrir-controls.js').replace(/\r\n/g, '\n');
+const bridge = read(root, 'src/fenrir-scene-bridge.js').replace(/\r\n/g, '\n');
 assert.equal(scene, read(root, 'src/fenrir-scene-v1.js'));
 
 const names = ['far', 'mid', 'near'];
@@ -85,7 +85,87 @@ function createScene({textureLimit = 4096, failMid = false} = {}) {
  };
 }
 
+function testPersona() {
+ const sandbox = {fenrirCity: false};
+ vm.runInNewContext(controls, sandbox);
+ const p = sandbox.createFenrirPersona();
+ const input = {clock: 0, enabled: true, active: true, paused: false, finished: false, charge: 18, overdrive: false, dialogue: true, busy: false};
+ const step = (clock, overrides = {}) => p.update({...input, clock, ...overrides});
+ assert.equal(step(0, {busy: true}), null);
+ assert.equal(step(1).kind, 'takeover');
+ assert.equal(p.status().handoffs, 1);
+ assert.equal(step(2, {enabled: false}), null);
+ assert.equal(step(6, {enabled: false}).kind, 'return');
+ assert.equal(p.status().interruptions, 1);
+ assert.equal(step(7, {busy: true}), null);
+ assert.equal(step(11).kind, 'takeover');
+ assert.equal(p.status().handoffs, 2);
+ assert.equal(step(12, {charge: 100, paused: true}), null);
+ assert.equal(step(16, {charge: 100}).kind, 'ready');
+ assert.equal(step(17, {overdrive: true, dialogue: false}), null);
+ assert.equal(step(22, {overdrive: true}), null);
+ assert.equal(step(23, {overdrive: false}).kind, 'recovered');
+ assert.equal(step(0.1, {enabled: false}), null);
+ assert.equal(p.status().handoffs, 0);
+ assert.equal(p.status().interruptions, 0);
+}
+function testMemory() {
+ const sandbox = {fenrirCity: false};
+ vm.runInNewContext(controls, sandbox);
+ const map = new Map();
+ let writes = 0;
+ const storage = {getItem: k => map.get(k) || null, setItem: (k,v) => {map.set(k,v);writes++;}};
+ const create = () => sandbox.createFenrirMemory(storage);
+ const m = create();
+ const input = {clock: 0, enabled: false, active: true, paused: false, finished: false};
+ const step = (clock, overrides = {}) => m.record({...input, clock, ...overrides});
+ step(0, {active: false});
+ assert.equal(m.status().runs, 0);
+ step(0.1);
+ step(0.2, {enabled: true});
+ const w = writes;
+ for(let i=3;i<=23;i++) step(i/10, {enabled: true});
+ assert.equal(writes, w, 'no per-frame storage writes');
+ assert(m.status().aiSeconds > 1.9);
+ step(2.4);
+ step(2.5, {finished: true});
+ step(2.6, {finished: true});
+ m.save();
+ assert.equal(m.status().runs, 1);
+ assert.equal(m.status().completed, 1);
+ assert.equal(m.status().handoffs, 1);
+ assert.equal(m.status().interruptions, 1);
+ const restored = create();
+ assert.equal(restored.prior().runs, 1);
+ assert.equal(restored.status().handoffs, 1);
+ const p = sandbox.createFenrirPersona(restored);
+ const line = p.update({clock: 1, enabled: true, active: true, paused: false, finished: false, charge: 18, dialogue: true, busy: false});
+ assert.equal(line.kind, 'takeover');
+ assert.match(line.text, /又见面/);
+ step(0.01);
+ assert.equal(m.status().runs, 2);
+ assert.equal(m.prior().runs, 1);
+ m.clear();
+ assert.equal(create().status().runs, 0);
+ assert.equal(m.prior().handoffs, 0);
+ m.setEnabled(false);
+ step(1, {enabled: true});
+ assert.equal(create().status().enabled, false);
+ assert.equal(create().status().handoffs, 0);
+ m.setEnabled(true);
+ assert.equal(create().status().enabled, true);
+ const bad = sandbox.createFenrirMemory({getItem: () => '{bad', setItem: () => {throw Error('blocked');}});
+ bad.record(input);
+ assert.equal(bad.status().runs, 1);
+ assert.equal(bad.status().available, false);
+ const corrupt = sandbox.createFenrirMemory({getItem: () => JSON.stringify({version:2,runs:-4,handoffs:'7',aiSeconds:1e300})});
+ assert.equal(corrupt.status().runs, 0);
+ assert.equal(corrupt.status().handoffs, 0);
+ assert.equal(corrupt.status().aiSeconds, 100000000);
+}
 async function main() {
+ testPersona();
+ testMemory();
  const env = createScene();
  const {api, status, textures, calls, urls, window, pose} = env;
  await new Promise(resolve => setImmediate(resolve));
@@ -145,6 +225,59 @@ async function main() {
  assert.equal(status.lastRoadMark.worldX, worldX);
  assert(Math.abs(status.lastRoadMark.x + status.cameraX - worldX) < 1e-8);
 
+ // P5: heavy impacts leave longer-lived road imprints and delayed secondary ripples.
+ const weighted = createScene();
+ await new Promise(resolve => setImmediate(resolve));
+ const wapi = weighted.api, wstatus = weighted.status;
+ const presses = [], rings = [];
+ const wetFx = {ready: () => true, drawContactPress: (...args) => presses.push(args), drawImpactRing: (...args) => rings.push(args)};
+ wapi.recordLanding({kind: 'landing', x: 200, at: 1, force: 0.9});
+ weighted.draw();
+ wapi.drawRoadContact(wetFx, 1.2);
+ assert.equal(rings.length, 2, 'a firm landing creates a delayed secondary water front');
+ assert.equal(wstatus.weight.roadMarks, 1);
+ rings.length = 0;
+ presses.length = 0;
+ wapi.drawRoadContact(wetFx, 2.3);
+ assert.equal(rings.length, 0, 'short-lived waves stop before the road imprint');
+ assert.equal(presses.length, 1, 'a wet contact imprint persists during recovery');
+ wapi.drawRoadContact(wetFx, 4.21);
+ assert.equal(wstatus.weight.roadMarks, 0, 'road marks expire');
+ weighted.pose.supported = true;
+ wapi.recordLanding({kind: 'landing', x: 200, at: 5, force: 1});
+ wapi.drawRoadContact(wetFx, 5.01);
+ assert.equal(wstatus.weight.roadMarks, 0, 'supported contact must not mark the road');
+ weighted.pose.supported = false;
+ for (let i = 0; i < 10; i++) {
+  const at = 6 + i * 0.1;
+  wapi.recordLanding({kind: 'landing', x: 200, at, force: 1});
+  wapi.drawRoadContact(wetFx, at);
+ }
+ assert.equal(wstatus.weight.roadMarks, 6, 'particle/mark budget remains bounded');
+ weighted.window.__xlImmersionPrefs.lowEffects = true;
+ wapi.drawRoadContact(wetFx, 7.1);
+ assert.equal(wstatus.weight.roadMarks, 0);
+ weighted.window.__xlImmersionPrefs.lowEffects = false;
+ wapi.drawRoadContact(wetFx, 7.2);
+ assert.equal(wstatus.weight.roadMarks, 0, 'disabled effects never replay');
+ wapi.recordLanding({kind: 'landing', x: 200, at: 7.3, force: 0.9});
+ wapi.drawRoadContact(wetFx, 7.31);
+ wapi.drawRoadContact(wetFx, 0.01);
+ assert.equal(wstatus.weight.roadMarks, 0, 'clock reset clears prior run effects');
+
+ const weightedDraw = wapi.wrapFrontFoot(() => wapi.drawSprite(foot, 120, -23, 160, 256));
+ weighted.pose.age = 0;
+ weighted.pose.force = 0.2;
+ weightedDraw();
+ const light = wstatus.weight.compression;
+ weighted.pose.force = 0.9;
+ weightedDraw();
+ assert(wstatus.weight.compression > light, 'heavier impact increases suspension compression');
+ assert(wstatus.weight.compression <= 0.058, 'visual compression is bounded');
+ weighted.window.__xlImmersionPrefs.reduceMotion = true;
+ weightedDraw();
+ assert(wstatus.weight.compression < light, 'reduced motion preserves the sole anchor with minimal travel');
+
  window.__xlImmersionPrefs.lowEffects = true;
  api.drawRoadContact(effects, 1.16);
  assert.equal(status.lastRoadMark, null);
@@ -165,6 +298,6 @@ async function main() {
   failed.draw();
   assert.deepEqual(failed.calls[0], [failed.original, 0, 0, 400, 240]);
  }
- console.log('Fenrir tests passed: release assets and host, actual iframe injection, camera continuity, sole anchor, world-space water, and fallback.');
+ console.log('Fenrir tests passed: release assets and host, actual iframe injection, camera continuity, sole anchor, world-space water, P5 settling and mark budget, and fallback.');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

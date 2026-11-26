@@ -1,4 +1,4 @@
-/* Fenrir city background, grounded foot rendering, and wet-road contact effects. */
+/* Fenrir city scene / P5 mechanical weight: anchored hydraulic settling and wet-road contact. */
 (function installFenrirCityScene(global) {
  'use strict';
  if (global.__installFenrirScene) return;
@@ -34,6 +34,10 @@
   let frontFootPose = null;
   let pendingLanding = null;
   const roadMarks = [];
+  const MAX_ROAD_MARKS = 6;
+  const MARK_LIFE = 3.2;
+  let lastRoadClock = null;
+  status.weight = {compression: 0, roadMarks: 0, landingForce: 0};
 
   function loadLayer(layer) {
    return new Promise((resolve, reject) => {
@@ -114,8 +118,15 @@
    const pose = frontFootPose;
    if (sprite[0] !== pose.texture) return null;
    frontFootPose = null;
-   const response = pose.force * Math.exp(-pose.age / 0.12);
-   const heightScale = 1 - Math.min(0.065, response * 0.056 + pose.pressure * 0.013);
+   // Visual suspension travel, not rubber-like widening or a change to collision geometry.
+   const age = Math.max(0, Number(pose.age) || 0);
+   const force = clamp(Number(pose.force) || 0, 0, 1);
+   const pressure = clamp(Number(pose.pressure) || 0, 0, 1);
+   const reduced = global.__xlImmersionPrefs?.reduceMotion;
+   const settling = force * (1 + age / 0.10) * Math.exp(-age / 0.10);
+   const compression = reduced ? pressure * 0.008 : Math.min(0.058, settling * 0.047 + pressure * 0.010);
+   status.weight.compression = compression;
+   const heightScale = 1 - compression;
    const heightOnRoad = height * heightScale;
    const soleGap = (pose.soleOffset - 1) * heightOnRoad / pose.frameHeight;
    status.lastFootContact = {x: x + width * pose.contactCenter, y: pose.floorY};
@@ -138,6 +149,7 @@
   function wrapFrontFoot(draw) {
    return function() {
     status.lastFootContact = null;
+    status.weight.compression = 0;
     const pose = context.getGroundPose();
     frontFootPose = pose?.grounded && !pose.supported ? pose : null;
     try {
@@ -151,35 +163,63 @@
   function recordLanding(event) {
    if (!status.ready || event?.kind !== 'landing') return;
    const pose = context.getGroundPose();
-   if (pose.supported) return;
-   const x = event.x - pose.width / 2 - pose.offset + pose.width * pose.contactCenter;
-   pendingLanding = {x, y: pose.floorY, at: event.at, force: event.force};
+   if (!pose?.grounded || pose.supported || !Number.isFinite(event.x) || !Number.isFinite(event.at)) return;
+   const force = clamp(Number(event.force) || 0, 0, 1);
+   const width = Math.max(1, Number(pose.width) || 1);
+   const x = event.x - width / 2 - pose.offset + width * pose.contactCenter;
+   pendingLanding = {x, y: pose.floorY, at: event.at, force, width};
+   status.weight.landingForce = force;
   }
 
   function drawRoadContact(floorGraphics, clock) {
    status.lastRoadMark = null;
-   if (!status.ready || !floorGraphics.ready()) return;
+   if (!Number.isFinite(clock)) return;
+   // A restarted simulation may reset the contact clock; never replay old marks.
+   if (lastRoadClock !== null && clock < lastRoadClock) {
+    roadMarks.length = 0;
+    if (pendingLanding && pendingLanding.at > clock) pendingLanding = null;
+   }
+   lastRoadClock = clock;
    const prefs = global.__xlImmersionPrefs;
-   while (roadMarks.length && clock - roadMarks[0].at >= 0.85) roadMarks.shift();
-   if (pendingLanding) {
-    const {x, y, at, force} = pendingLanding;
+   if (prefs?.lowEffects || prefs?.reduceMotion) {
+    roadMarks.length = 0;
     pendingLanding = null;
-    if (!prefs?.lowEffects && !prefs?.reduceMotion) {
-     // Use the crop already drawn for the same frame as the foot.
-     roadMarks.push({worldX: x + status.cameraX, y, at, force});
-     if (roadMarks.length > 3) roadMarks.shift();
+    status.weight.roadMarks = 0;
+    return;
+   }
+   if (!status.ready || !floorGraphics.ready()) {
+    pendingLanding = null;
+    return;
+   }
+   while (roadMarks.length && clock - roadMarks[0].at >= MARK_LIFE) roadMarks.shift();
+   if (pendingLanding) {
+    const {x, y, at, force, width} = pendingLanding;
+    pendingLanding = null;
+    if (clock >= at && clock - at < MARK_LIFE) {
+     // Anchor the footprint to the near-layer crop used for this frame.
+     roadMarks.push({worldX: x + status.cameraX, y, at, force, width});
+     if (roadMarks.length > MAX_ROAD_MARKS) roadMarks.shift();
     }
    }
-   if (prefs?.lowEffects || prefs?.reduceMotion) return;
+   status.weight.roadMarks = roadMarks.length;
 
    for (const mark of roadMarks) {
     const x = mark.worldX - status.cameraX;
-    const progress = clamp((clock - mark.at) / 0.85, 0, 1);
-    const fade = 1 - progress;
-    const width = 33 + 23 * mark.force + 20 * progress;
-    if (x + width < 0 || x - width > viewW) continue;
-    floorGraphics.drawContactPress(x, mark.y + 1, width, 0.45 * fade, 0);
-    floorGraphics.drawImpactRing(x, mark.y, width, 2.5 + 2 * progress, fade * (0.10 + 0.11 * mark.force));
+    const age = Math.max(0, clock - mark.at);
+    const fade = Math.pow(1 - clamp(age / MARK_LIFE, 0, 1), 1.5);
+    const halfWidth = mark.width * (0.30 + 0.10 * mark.force);
+    if (x + mark.width * 2 < 0 || x - mark.width * 2 > viewW) continue;
+    // Persistent wet depression / dark contact imprint: slow recovery after lift.
+    floorGraphics.drawContactPress(x, mark.y + 1, halfWidth, fade * (0.25 + 0.35 * mark.force), 0);
+    // Two staggered water fronts. The second wave is weaker and only on firm impacts.
+    for (const [delay, gain, duration] of [[0, 1, 0.72], [0.15, 0.48, 0.95]]) {
+     if (delay && mark.force < 0.35) continue;
+     const t = (age - delay) / duration;
+     if (t < 0 || t >= 1) continue;
+     const radius = halfWidth * (1 + t * (1.5 + mark.force * 0.8));
+     const alpha = (1 - t) ** 2 * gain * (0.12 + mark.force * 0.20);
+     floorGraphics.drawImpactRing(x, mark.y, radius, Math.max(2, radius * 0.085), alpha);
+    }
     status.lastRoadMark = {x, worldX: mark.worldX, y: mark.y};
    }
   }
