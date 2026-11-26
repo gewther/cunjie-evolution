@@ -1,6 +1,75 @@
 /* Fenrir-only controls inside the legacy game iframe. */
+// Local, bounded gameplay counters; no identifying data, network or shared save changes.
+function createFenrirMemory(storage) {
+ const key = 'cunjie-fenrir-persona-v2';
+ const fields = ['runs', 'completed', 'handoffs', 'interruptions', 'aiSeconds'];
+ const blank = () => ({version: 2, runs: 0, completed: 0, handoffs: 0, interruptions: 0, aiSeconds: 0});
+ const limit = 100000000;
+ let data = blank(), enabled = true, available = !!storage, dirty = false;
+ let lastClock = null, lastEnabled = false, started = false, completed = false, lastSave = 0;
+ function clean(raw) {
+  const out = blank();
+  if (!raw || raw.version !== 2) return out;
+  for (const k of fields) if (typeof raw[k] === 'number' && Number.isFinite(raw[k])) out[k] = Math.min(limit, Math.max(0, k === 'aiSeconds' ? raw[k] : Math.floor(raw[k])));
+  return out;
+ }
+ try {
+  const raw = JSON.parse(storage?.getItem(key) || 'null');
+  if (raw?.version === 2) {
+   enabled = raw.enabled !== false;
+   if (enabled) data = clean(raw);
+  }
+ } catch { available = false; }
+ // Snapshot of prior runs, used for dialogue, not fabricated relationship history.
+ let prior = {...data};
+ function save() {
+  if (!dirty || !storage) return;
+  try {
+   storage.setItem(key, JSON.stringify({...data, aiSeconds: Math.round(data.aiSeconds * 100) / 100, enabled}));
+   available = true; dirty = false;
+  } catch { available = false; }
+ }
+ function add(k, n = 1) {
+  data[k] = Math.min(limit, data[k] + n); dirty = true;
+ }
+ function record(input) {
+  const clock = Number(input.clock);
+  if (!Number.isFinite(clock) || clock < 0) return;
+  const reset = lastClock !== null && clock < lastClock;
+  const dt = lastClock === null || reset ? 0 : Math.min(0.1, Math.max(0, clock - lastClock));
+  if (reset) { started = false; completed = false; lastSave = clock; prior = {...data}; }
+  lastClock = clock;
+  const ai = !!input.enabled;
+  if (!enabled) { lastEnabled = ai; return; }
+  if (input.finished && started && !completed) {
+   completed = true; add('completed'); save();
+  }
+  if (!input.active || input.paused || input.finished) return;
+  if (!started) {
+   started = true; add('runs'); if (ai) add('handoffs'); lastEnabled = ai; save();
+  } else if (ai !== lastEnabled) {
+   add(ai ? 'handoffs' : 'interruptions'); lastEnabled = ai; save();
+  }
+  if (ai && dt > 0) add('aiSeconds', dt);
+  if (clock - lastSave >= 10) { lastSave = clock; save(); }
+ }
+ function clear() {
+  data = blank(); prior = blank(); dirty = true; save();
+  // Keep the current run's baseline: clearing does not invent another visit.
+ }
+ function setEnabled(next) {
+  const value = !!next;
+  if (enabled === value) return;
+  enabled = value;
+  if (!enabled) clear();
+  else { dirty = true; save(); }
+ }
+ function status() { return {...data, aiSeconds: Math.round(data.aiSeconds * 10) / 10, enabled, available}; }
+ return {record, save, clear, setEnabled, status, prior: () => ({...prior})};
+}
+
 // Session-local persona director. No new movement or collision commands.
-function createFenrirPersona() {
+function createFenrirPersona(memory = null) {
  let phase = 'manual', handoffs = 0, interruptions = 0, lastClock = 0;
  let pending = null, lastLineAt = -Infinity, nextIdleAt = 0;
  let observed = 0, lastChargeBand = false, lastOverdrive = false;
@@ -54,7 +123,10 @@ function createFenrirPersona() {
   if (!pending || input.busy || clock - lastLineAt < 5) return null;
   const kind = pending.kind;
   pending = null;
-  const pool = pools[kind];
+  const history = memory?.prior();
+  const pool = kind === 'takeover' && handoffs === 1 && history?.handoffs > 0
+   ? ['又见面了。今天也交给我？', '上回你也让我接管过。还记得吧？']
+   : pools[kind];
   const index = (cursor[kind] || 0) % pool.length;
   cursor[kind] = index + 1;
   lastLineAt = clock;
@@ -137,7 +209,13 @@ if (fenrirCity) {
   pace: preferences.autoPace, smart: preferences.autoSmart
  }) : null;
  const hunt = window.xlFenrirState;
- const persona = createFenrirPersona();
+ let personaStorage = null;
+ try { personaStorage = window.localStorage; } catch {}
+ const memory = createFenrirMemory(personaStorage);
+ const persona = createFenrirPersona(memory);
+ window.__fenrirMemory = () => memory.status();
+ window.addEventListener('pagehide', () => memory.save());
+ document.addEventListener('visibilitychange', () => { if (document.hidden) memory.save(); });
  function personaDialogueEnabled() {
   try {
    const prefs = JSON.parse(localStorage.getItem('cunjie-stomp-impact-v1'))?.prefs || {};
@@ -176,6 +254,24 @@ if (fenrirCity) {
  aiButton.id = 'fn-auto-btn';
  aiButton.type = 'button';
  dock.prepend(aiButton);
+ const memoryButton = document.createElement('button');
+ memoryButton.type = 'button';
+ memoryButton.id = 'fn-memory-toggle';
+ const clearMemoryButton = document.createElement('button');
+ clearMemoryButton.type = 'button';
+ clearMemoryButton.id = 'fn-memory-clear';
+ clearMemoryButton.textContent = '清空角色记忆';
+ clearMemoryButton.title = '清空芬里尔本地游玩统计，不影响游戏存档';
+ function syncMemoryButtons() {
+  const m = memory.status();
+  memoryButton.textContent = '角色记忆：' + (m.enabled ? (m.available ? '开' : '仅本局') : '关');
+  memoryButton.setAttribute('aria-pressed', String(m.enabled));
+  clearMemoryButton.disabled = !m.enabled;
+ }
+ memoryButton.onclick = () => { memory.setEnabled(!memory.status().enabled); syncMemoryButtons(); };
+ clearMemoryButton.onclick = () => { memory.clear(); syncMemoryButtons(); };
+ dock.append(memoryButton, clearMemoryButton);
+ syncMemoryButtons();
 
  function setPilot(enabled) {
   if (pilot?.enabled !== enabled) {
@@ -240,6 +336,8 @@ if (fenrirCity) {
     dialogueAllowed = personaDialogueEnabled();
     dialogueClock = hunt.totalClock;
    }
+   memory.record({clock: hunt.totalClock, enabled: pilot.enabled, active,
+     paused: pause || tr, finished: hunt.finished});
    const line = persona.update({
     clock: hunt.totalClock, enabled: pilot.enabled, active,
     paused: pause || tr, finished: hunt.finished,
