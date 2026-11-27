@@ -36,11 +36,22 @@
  const immPrefs=Object.assign(readInitialPrefs(),window.__xlImmersionPrefs||{});
  window.__xlImmersionPrefs=immPrefs;
 
+ function readInitialDreadMode(){
+  try{
+   const v=window.parent&&window.parent.localStorage&&window.parent.localStorage.getItem('cunjie-tech-dread-v1');
+   return (v==='soft'||v==='off')?v:'standard';
+  }catch{return 'standard';}
+ }
+ let dreadMode=readInitialDreadMode();
+ let lastDreadLevel=0;
+
  if(typeof window.addEventListener==='function'){
   window.addEventListener('message',e=>{
    const d=e&&e.data;
    if(d&&d.type==='cunjie-immersion-prefs'&&d.prefs){
     Object.assign(immPrefs,d.prefs);
+   }else if(d&&d.type==='cunjie-tech-dread-mode'&&(d.mode==='standard'||d.mode==='soft'||d.mode==='off')){
+    dreadMode=d.mode;
    }
   });
  }
@@ -72,7 +83,7 @@
  // --- Mobile Haptics (navigator.vibrate) ---
  let lastVibeAt=0,lastGrindVibeAt=0,lastProxVibeAt=0;
  function immVibrate(pattern,minGapMs=55){
-  if(immPrefs.immersionHaptics===false)return;
+  if(immPrefs.immersionHaptics===false||isReducedMotion()||isLowEffects())return;
   if(typeof navigator==='undefined'||typeof navigator.vibrate!=='function')return;
   const now=typeof performance!=='undefined'?performance.now():Date.now();
   if(now-lastVibeAt<minGapMs)return;
@@ -286,7 +297,11 @@
    l2Freq=160;l2Gain=0.009;
   }
 
-  // Proximity low-pass muffling when giant foot looms near ground
+  // Proximity low-pass muffling + sudden silence vacuum before heavy impact
+  const inSilenceMood=isStory&&typeof realmMood!=='undefined'&&realmMood&&realmMood.special==='silence';
+  const loomDrop=isAirborneDescending(0.82,480);
+  const inVacuum=dreadMode!=='off'&&!isLowEffects()&&!isReducedMotion()&&(inSilenceMood||loomDrop);
+  const vacuumMul=inVacuum?(dreadMode==='soft'?0.45:0.18):1;
   const cut=openCut-(openCut-muffCut)*Math.pow(prox,1.15);
   safeRamp(g.flt1.frequency,l1Freq,at,0.12);
   safeRamp(g.flt1.Q,l1Q,at,0.12);
@@ -294,12 +309,13 @@
   safeRamp(g.flt2.frequency,l2Freq,at,0.12);
   safeRamp(g.g2.gain,l2Gain,at,0.12);
   safeRamp(g.lowpass.frequency,cut,at,0.08);
-  safeRamp(g.master.gain,masterGain*duck,at,0.07);
+  safeRamp(g.master.gain,masterGain*duck*vacuumMul,at,0.06);
 
-  // Subtle sub-pressure drone when looming low or during overdrive/fever burst
+  // Subtle sub-pressure drone when looming low, in sudden silence vacuum, or during overdrive/fever burst
   const burst=(isStory&&typeof realmBurstTime==='number'&&realmBurstTime>0);
-  const droneTarget=(isOverdrive||burst)?0.028:(prox>0.42?(prox-0.42)*0.038:0.0001);
-  safeRamp(g.droneOsc.frequency,isOverdrive?56:(burst?52:46),at,0.12);
+  const baseDrone=(isOverdrive||burst)?0.028:(prox>0.42?(prox-0.42)*0.038:0.0001);
+  const droneTarget=inVacuum?Math.max(baseDrone,dreadMode==='soft'?0.018:0.032):baseDrone;
+  safeRamp(g.droneOsc.frequency,inVacuum?44:(isOverdrive?56:(burst?52:46)),at,0.12);
   safeRamp(g.droneGain.gain,Math.max(0.0001,droneTarget),at,0.09);
  }
 
@@ -340,8 +356,20 @@
   }
  }
 
- // --- Tactile Hit-Stop, Proximity & Breathing Camera State ---
- let hitStopLeft=0,hitStopCooldown=0;
+ // --- Tactile Hit-Stop (real-time, cancellable on manual takeover), Proximity & Breathing Camera State ---
+ const nowReal=()=>((typeof performance!=='undefined'&&typeof performance.now==='function')?performance.now():Date.now());
+ let hitStopUntil=0,hitStopCooldownUntil=0;
+ const isHitStopped=()=>hitStopUntil>nowReal();
+ function cancelHitStop(){hitStopUntil=0;}
+ if(typeof oc!=='undefined'&&oc&&typeof oc.addEventListener==='function'){
+  oc.addEventListener('touchstart',cancelHitStop,{passive:true});
+  oc.addEventListener('pointerdown',cancelHitStop,{passive:true});
+ }
+ if(typeof window.addEventListener==='function'){
+  window.addEventListener('touchstart',cancelHitStop,{passive:true});
+  window.addEventListener('pointerdown',cancelHitStop,{passive:true});
+  window.addEventListener('keydown',cancelHitStop,{passive:true});
+ }
  let prevGrounded=false,prevProx=0;
  let camZoom=1,camFocusX=w*0.5;
  let rainLensTimer=1.8;
@@ -359,10 +387,11 @@
    immVibrate(Math.round(16+Math.min(1,force)*28),70);
   }
 
-  // Hit-stop on heavy impacts (28-50ms)
-  if(!isReducedMotion()&&!slow&&force>=0.42&&hitStopCooldown<=0){
-   hitStopLeft=clamp(0.026+force*0.024+(isOverdrive?0.01:0),0.026,0.052);
-   hitStopCooldown=0.28;
+  // Real-time Hit-stop on heavy impacts (26-52ms)
+  const tNow=nowReal();
+  if(!isReducedMotion()&&!slow&&force>=0.42&&tNow>=hitStopCooldownUntil){
+   hitStopUntil=tNow+clamp(26+force*24+(isOverdrive?10:0),26,52);
+   hitStopCooldownUntil=tNow+280;
   }
 
   // Foreground lens droplets or rooftop dust gust
@@ -379,24 +408,32 @@
   if(typeof window.xlFreeContact!=='undefined'&&window.xlFreeContact)return window.xlFreeContact;
   return null;
  }
+ function isAirborneDescending(minProx,minVelo){
+  const ct=currentContact();
+  const grounded=ct?!!ct.grounded:(typeof paw_state!=='undefined'&&paw_state>=3);
+  if(grounded)return false;
+  const p=active&&!pause&&!tr?clamp((paw_y-h*0.26)/Math.max(1,floor_y-h*0.26),0,1):0;
+  return p>minProx&&typeof paw_y_velo==='number'&&paw_y_velo>minVelo;
+ }
 
  // Wrap update_bugs so hit-stop pauses crowd motion in sync with paw
  const immOldUpdateBugs=typeof update_bugs==='function'?update_bugs:null;
  if(immOldUpdateBugs){
   update_bugs=function(){
-   if(hitStopLeft>0&&active&&!pause&&!tr)return;
+   if(isHitStopped()&&active&&!pause&&!tr)return;
    return immOldUpdateBugs.apply(this,arguments);
   };
  }
 
- // Wrap update_paw for hit-stop, ambience, landing detection, lens drops, and haptics
+ // Wrap update_paw for real-time hit-stop (yields immediately on manual takeover), ambience, landing, lens drops, and haptics
  const immOldUpdatePaw=typeof update_paw==='function'?update_paw:null;
  if(immOldUpdatePaw){
   update_paw=function(){
+   if(typeof realmTouch!=='undefined'&&realmTouch&&realmTouch.freshTap){
+    cancelHitStop();
+   }
    const step=Math.min(0.05,(typeof delta==='number'&&delta>0)?delta:0.016);
-   if(hitStopCooldown>0)hitStopCooldown=Math.max(0,hitStopCooldown-step);
-   if(hitStopLeft>0&&active&&!pause&&!tr){
-    hitStopLeft=Math.max(0,hitStopLeft-Math.min(0.025,step));
+   if(isHitStopped()&&active&&!pause&&!tr){
     return;
    }
    immOldUpdatePaw.apply(this,arguments);
@@ -482,14 +519,15 @@
   set_yoff=function(off){
    immOldSetYoff(off);
    if(pause||slow||isReducedMotion()||(typeof xlGfxPrefs!=='undefined'&&!xlGfxPrefs.shake))return;
-   if(camZoom<=1.0015&&hitStopLeft<=0)return;
+   const hsActive=isHitStopped();
+   if(camZoom<=1.0015&&!hsActive)return;
    const ox=clamp((camFocusX/Math.max(1,w))*100,18,82).toFixed(1);
    const cur=oc.style.transform||'';
    if(!cur){
     oc.style.transformOrigin=`${ox}% 78%`;
-    const hs=hitStopLeft>0?1.008:1;
+    const hs=hsActive?1.008:1;
     oc.style.transform=`scale(${(camZoom*hs).toFixed(4)})`;
-   }else if(hitStopLeft>0){
+   }else if(hsActive){
     oc.style.transform=cur+' scale(1.008)';
    }
   };
@@ -506,22 +544,67 @@
    occ.save();
    occ.setTransform(sx,0,0,sy,0,0);
 
-   // 1. Looming Shadow Occlusion ("天黑了一块")
+   // 1. Looming Shadow Occlusion ("天黑了一块") + Shadow-first anticipation
+   const prox=clamp((paw_y-h*0.28)/Math.max(1,floor_y-h*0.28),0,1);
+   const pressureNow=clamp(typeof pressure==='number'?pressure:0,0,1);
+   const burstNow=(isStory&&typeof realmBurstTime==='number'&&realmBurstTime>0);
+   const overNow=!!(window.xlFenrirState&&window.xlFenrirState.overdrive);
+   const rawDread=clamp(prox*0.48+pressureNow*0.52+((overNow||burstNow)?0.25:0),0,1);
+   lastDreadLevel=dreadMode==='off'?0:(dreadMode==='soft'?rawDread*0.55:rawDread);
+
    if(!hide_paws&&!isLowEffects()){
-    const prox=clamp((paw_y-h*0.28)/Math.max(1,floor_y-h*0.28),0,1);
-    if(prox>0.22){
-     const k=(prox-0.22)/0.78;
+    const shadowMin=dreadMode==='off'?0.22:0.14;
+    const shadowMul=dreadMode==='off'?1:(dreadMode==='soft'?1:1.22);
+    if(prox>shadowMin){
+     const k=(prox-shadowMin)/(1-shadowMin);
      const rad=Math.max(70,(paw&&paw.width?paw.width:96)*(1.15+k*0.65));
      const gx=paw_x,gy=floor_y-6;
      const grad=occ.createRadialGradient(gx,gy,rad*0.12,gx,gy,rad);
-     const peak=(isFenrir?0.30:0.22)*k;
-     grad.addColorStop(0,`rgba(4,9,16,${peak.toFixed(3)})`);
-     grad.addColorStop(0.65,`rgba(4,9,16,${(peak*0.42).toFixed(3)})`);
+     const peak=(isFenrir?0.30:0.22)*k*shadowMul;
+     grad.addColorStop(0,`rgba(4,9,16,${Math.min(0.65,peak).toFixed(3)})`);
+     grad.addColorStop(0.65,`rgba(4,9,16,${Math.min(0.45,peak*0.42).toFixed(3)})`);
      grad.addColorStop(1,'rgba(4,9,16,0)');
      occ.globalAlpha=1;
      occ.fillStyle=grad;
      occ.fillRect(Math.max(0,gx-rad),Math.max(0,gy-rad*0.75),rad*2,rad*1.1);
     }
+
+    // 1b. Contracting High-Tech Surveillance Target Reticle (airborne descent only)
+    if(dreadMode!=='off'&&isAirborneDescending(0.16,40)){
+     const footW=(paw&&paw.width?paw.width:96);
+     const rw=Math.max(footW*0.55,footW*(1.28-0.52*prox));
+     const halfW=rw*0.5,rh=Math.max(7,rw*0.15),br=Math.max(5,rw*0.14);
+     const rx=paw_x,ry=floor_y-4;
+     const warn=prox>0.72;
+     const rAlpha=(0.24+0.44*prox)*(dreadMode==='soft'?0.65:1);
+     occ.globalAlpha=1;
+     occ.strokeStyle=warn?`rgba(255,77,90,${rAlpha.toFixed(3)})`:`rgba(72,229,255,${rAlpha.toFixed(3)})`;
+     occ.lineWidth=warn?1.15:0.9;
+     occ.beginPath();
+     occ.moveTo(rx-halfW,ry-rh+br);occ.lineTo(rx-halfW,ry-rh);occ.lineTo(rx-halfW+br,ry-rh);
+     occ.moveTo(rx+halfW-br,ry-rh);occ.lineTo(rx+halfW,ry-rh);occ.lineTo(rx+halfW,ry-rh+br);
+     occ.moveTo(rx-halfW,ry+rh-br);occ.lineTo(rx-halfW,ry+rh);occ.lineTo(rx-halfW+br,ry+rh);
+     occ.moveTo(rx+halfW-br,ry+rh);occ.lineTo(rx+halfW,ry+rh);occ.lineTo(rx+halfW,ry+rh-br);
+     occ.moveTo(rx-3,ry);occ.lineTo(rx+3,ry);
+     occ.stroke();
+     if(typeof occ.fillText==='function'){
+      occ.fillStyle=occ.strokeStyle;
+      occ.font='600 6.5px ui-monospace,monospace';
+      occ.textAlign='center';
+      occ.fillText('ALT '+Math.max(0.1,30*(1-prox)).toFixed(1)+'m',rx,ry-rh-2.5);
+     }
+    }
+   }
+
+   // 1c. Radial edge dread vignette inside canvas
+   if(lastDreadLevel>0.08&&!isLowEffects()&&!isReducedMotion()){
+    const r0=Math.min(w,h)*0.28,r1=Math.max(w,h)*0.72;
+    const vg=occ.createRadialGradient(w*0.5,h*0.54,r0,w*0.5,h*0.54,r1);
+    vg.addColorStop(0,'rgba(4,9,15,0)');
+    vg.addColorStop(1,`rgba(3,7,13,${(0.38*lastDreadLevel).toFixed(3)})`);
+    occ.globalAlpha=1;
+    occ.fillStyle=vg;
+    occ.fillRect(0,0,w,h);
    }
 
    // 2. Rain camera-lens droplets
@@ -638,6 +721,9 @@ body.imm-hud-faded #xl-hud:hover,body.imm-hud-faded #fn-dock:hover{opacity:1;}
   ambienceActive:!!ambGraph,
   lensDrops:lensDrops.length,
   camZoom:Number(camZoom.toFixed(4)),
+  dreadMode,
+  dreadLevel:Number(lastDreadLevel.toFixed(3)),
+  hitStopActive:isHitStopped(),
   prefs:{...immPrefs}
  });
 })();

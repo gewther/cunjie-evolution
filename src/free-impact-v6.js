@@ -175,7 +175,7 @@ draw_front_paw=function(){
  if(hide_paws){freeOldFront();return;}
  if(!freeContact.grounded){
   if(paw_y_velo>340){
-   const s=paw.front_spr,uw=s[3],uh=s[4],n=s[6],frame=paw_state;
+   const s=paw.front_spr,uw=s[3],uh=s[4],n=s[6],dw=paw.width,dh=uh*(dw/uw),frame=paw_state;
    const fx=n?(s[5]?floor(frame/n):frame%n):(s[5]?0:frame),fy=n?(s[5]?frame%n:floor(frame/n)):(s[5]?frame:0);
    const fo=(typeof xlSkinGeo==='function'?xlSkinGeo():XL_GEOMETRY[xlActiveProfile.id]).frontOffsets;
    const hdKey=(typeof xlGetHdFrame==='function')?xlGetHdFrame(frame):((typeof xlHasHdAJ6==='function'&&xlHasHdAJ6()&&typeof realmAJ6Frames!=='undefined')?realmAJ6Frames.get(frame):null);
@@ -186,7 +186,7 @@ draw_front_paw=function(){
    for(let k=3;k>=1;k--){
     alpha=xlModeFade*(.07+.14*speedK)/k;
     const dy=k*(6+14*speedK),stretch=1+.038*speedK;
-    sprite_scaled(sprSrc,paw_x-paw.width/2-paw.offset,yBottom-dy-uh*stretch,uw,uh*stretch);
+    sprite_scaled(sprSrc,paw_x-dw/2-paw.offset,yBottom-dy-dh*stretch,dw,dh*stretch);
    }
    alpha=oldAlpha;
   }

@@ -17,7 +17,7 @@ if (html.includes(hudOld)) {
   html = html.replace(hudOld, hudNew);
 }
 
-const src = fs.readFileSync(path.join(root, 'src', 'fenrir-gameplay.js'), 'utf8');
+const src = fs.readFileSync(path.join(root, 'src', 'fenrir-gameplay.js'), 'utf8').replace(/\r\n/g, '\n');
 const block = `/* FENRIR_GAMEPLAY_BEGIN */\n${src}\n/* FENRIR_GAMEPLAY_END */\n`;
 const begin = '/* FENRIR_GAMEPLAY_BEGIN */';
 const end = '/* FENRIR_GAMEPLAY_END */\n';
