@@ -24,6 +24,7 @@ BUILD_STEPS = [
     ("Wave 1 Immersion (ambience, haptics, camera, lens FX)", ["node", "tools/build_immersion.cjs"]),
     ("Unified HD & custom skin pack runtime", ["node", "tools/build_skin_runtime.cjs"]),
     ("HD art overhaul runtime", ["node", "tools/build_art_v1.cjs"]),
+    ("High-tech dread terminal v1", ["node", "tools/build_tech_dread.cjs"]),
     ("PWA manifest, icons & Service Worker", [sys.executable, "tools/build_pwa.py"]),
     ("Standalone offline single-file HTML", [sys.executable, "tools/build_offline_html.py"]),
 ]
@@ -36,6 +37,7 @@ TEST_STEPS = [
     ("Free & Fenrir responsive touch tests", ["node", "tools/test_free_touch.cjs"]),
     ("Fenrir city scene tests", ["node", "tools/test_fenrir_scene.cjs"]),
     ("HD art overhaul tests", ["node", "tools/test_art_hd.cjs"]),
+    ("High-tech dread atmosphere tests", ["node", "tools/test_tech_dread.cjs"]),
     ("PWA manifest & Service Worker tests", ["node", "tools/test_pwa.cjs"]),
 ]
 
@@ -47,6 +49,7 @@ CHECK_SCRIPTS = [
     "dist/scripts/host-2.js",
     "dist/scripts/impact-host-3.js",
     "dist/scripts/fenrir-scene-v1.js",
+    "dist/scripts/tech-dread-v1.js",
     "dist/scripts/pwa.js",
     "dist/sw.js",
     "dist/data/touch-v1-impact.js",
@@ -57,6 +60,7 @@ RELEASE_FILES = [
     "manifest.webmanifest",
     "sw.js",
     "scripts/pwa.js",
+    "scripts/tech-dread-v1.js",
     "scripts/render-quality.js",
     "scripts/skin-packs.js",
     "scripts/room-choice.js",
@@ -224,6 +228,7 @@ def main():
         run_step("Wave 1 Immersion release sync", ["node", "tools/build_immersion.cjs", "--release"])
         run_step("Fenrir city release sync", ["node", "tools/build_fenrir_scene.cjs", "--release"])
         run_step("HD art overhaul release sync", ["node", "tools/build_art_v1.cjs", "--release"])
+        run_step("High-tech dread terminal release sync", ["node", "tools/build_tech_dread.cjs", "--release"])
         run_step("PWA release sync", [sys.executable, "tools/build_pwa.py", "--release"])
         run_step("Standalone offline HTML from release", [sys.executable, "tools/build_offline_html.py", "--release"])
         paths = [os.path.join("dist-release", "game", rel.removeprefix("dist/")) for rel in CHECK_SCRIPTS]

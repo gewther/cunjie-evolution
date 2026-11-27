@@ -12,6 +12,8 @@ on:
       - "src/fenrir-scene-bridge.js"
       - "src/fenrir-controls.js"
       - "src/free-impact-v6.js"
+      - "src/immersion-v1.js"
+      - "src/tech-dread-v1.js"
       - "src/art-overhaul-v1.js"
       - "src/art-hd-geo.json"
       - "assets/fenrir/*.svg"
@@ -22,6 +24,7 @@ on:
       - "dist-release/game/scripts/impact-host-3.js"
       - "dist-release/game/scripts/touch-v1-impact-host-1.js"
       - "dist-release/game/scripts/fenrir-scene-v1.js"
+      - "dist-release/game/scripts/tech-dread-v1.js"
       - "dist-release/game/assets/**/*"
       - "dist-release/game/data/04-images-deferred.js"
       - "dist-release/game/data/touch-v1-*.js"
@@ -30,8 +33,10 @@ on:
       - "tools/build_fenrir_scene.cjs"
       - "tools/build_free_impact.cjs"
       - "tools/build_offline_html.py"
+      - "tools/build_tech_dread.cjs"
       - "tools/test_art_hd.cjs"
       - "tools/test_fenrir_scene.cjs"
+      - "tools/test_tech_dread.cjs"
 jobs:
   checks:
     runs-on: ubuntu-latest

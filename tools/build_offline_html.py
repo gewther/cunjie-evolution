@@ -175,6 +175,7 @@ def build_offline_html(game_dir=DIST, entry="impact.html"):
         "scripts/touch-v1-impact-host-1.js",
         "scripts/host-2.js",
         ("INLINE_HOST_3", host3_js),
+        "scripts/tech-dread-v1.js",
     ]
 
     tail_anchor = '<script src="scripts/render-quality.js"></script>'

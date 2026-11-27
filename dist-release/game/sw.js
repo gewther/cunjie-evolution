@@ -2,7 +2,7 @@
 'use strict';
 
 const CACHE_PREFIX = 'cunjie-pwa-';
-const CACHE_NAME = CACHE_PREFIX + "a2f14af4";
+const CACHE_NAME = CACHE_PREFIX + "f56f52dd";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -32,6 +32,7 @@ const CORE_ASSETS = [
   "./scripts/render-quality.js",
   "./scripts/room-choice.js",
   "./scripts/skin-packs.js",
+  "./scripts/tech-dread-v1.js",
   "./scripts/touch-v1-impact-host-1.js"
 ];
 const ALL_ASSETS = [
@@ -137,6 +138,7 @@ const ALL_ASSETS = [
   "./scripts/render-quality.js",
   "./scripts/room-choice.js",
   "./scripts/skin-packs.js",
+  "./scripts/tech-dread-v1.js",
   "./scripts/touch-v1-impact-host-1.js"
 ];
 
