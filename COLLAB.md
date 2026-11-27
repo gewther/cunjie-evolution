@@ -39,6 +39,7 @@ This file and `ROADMAP_DUAL_AI.md` are the shared handoff sources of truth. Re-r
 5. Preserve manual controls, touch input, fullscreen forwarding, non-Fenrir modes, existing save data and the offline single-file build.
 6. No external model API, paid service, telemetry, user identifiers or remote memory without explicit user approval. Fenrir memory remains local and user-controllable.
 7. Keep public deployment deliberate. The current Pages workflow deploys on pushes to `main`; do not change that workflow or merge to `main` without the user's approval.
+8. **Creative & atmospheric direction (high-tech psychological dread):** Target a cold high-tech observation/containment terminal aesthetic and oppressive psychological atmosphere driven by extreme 30 m scale imbalance, shadow-first anticipation, sudden silence before impact, sub-bass/hydraulic weight, telemetry readouts, and uncanny AI awareness (non-gore tension akin to *Portal* / *Control* / *Inside*). This complements Rule 1: always keep outcomes playful and non-lethal, and honor `reduceMotion`, `lowEffects`, and optional softer atmosphere settings across P5 dialogue contrast, P6 weight/shadow/camera immersion, and HUD styling.
 
 ## 4. Verified repository baseline
 
@@ -62,6 +63,7 @@ This file and `ROADMAP_DUAL_AI.md` are the shared handoff sources of truth. Re-r
 - See `ROADMAP_DUAL_AI.md` for the complete P5–P9 shared plan, file ownership lock matrix, and milestone DoDs.
 - Current next cloud item for ChatGPT: **P5.3 — Contextual short dialogue & proactive banter with cooldown/anti-repeat arbitration** (keeping playful, arrogant teenage-boy Fenrir tone and non-lethal outcomes).
 - Reorder based on the user's real-device playtest feedback. Prefer one small, reviewable increment over a broad rewrite.
+- Apply the producer-approved **high-tech surveillance & psychological dread** aesthetic across P5.3/P5.4 dialogue contrast (cold system telemetry vs. observant Fenrir/Xiaolong remarks), P6 mechanical weight/shadow anticipation/hit-stop, and P7 anomalies & weather/lighting presets as detailed in `ROADMAP_DUAL_AI.md`.
 
 ## 6. Per-task handoff checklist
 - [ ] State the base `main` SHA and inspect open PRs.
