@@ -126,4 +126,21 @@
  <rect x="2190" y="179" width="198" height="18" fill="#0e1e2b"/>
  <rect x="2210" y="181" width="60" height="8" fill="#e9bd72" opacity=".6"/>
 </g>
+<!-- Service district: a low enclosed link between two distinct building volumes. -->
+<g transform="translate(-538 0)">
+ <path d="M1108 104H1290V112H1108Z" fill="#090f19"/>
+ <path d="M1112 79H1286V104H1112Z" fill="#111f2c" stroke="#627d8e" stroke-width="1.5"/>
+ <path d="M1119 84H1279V97H1119Z" fill="#233d4b"/>
+ <path d="M1120 85H1278" stroke="#77bdcd" stroke-opacity=".66"/>
+ <path d="M1132 83V101M1158 83V101M1184 83V101M1210 83V101M1236 83V101M1262 83V101" stroke="#101f2a" stroke-width="3"/>
+ <path d="M1115 102H1283" stroke="#648898" stroke-opacity=".45"/>
+ <path d="M1166 111l12 9h54l12-9" fill="#0a1521" stroke="#4e6878" stroke-width="1.25"/>
+ <path d="M1190 117h30" stroke="#78bac9" stroke-width="1.5" stroke-opacity=".68"/>
+</g>
+<g transform="translate(-538 0)">
+ <path d="M948 193v-18h84v18m240 0v-19h107v19" fill="#0a141e" stroke="#4a6879" stroke-width="1.25"/>
+ <path d="M953 179h74m250 0h97m-97 4h97m-97 4h97" stroke="#668692" stroke-opacity=".36"/>
+ <path d="M950 174h24m302 0h30" stroke="#79c8d6" stroke-opacity=".64" stroke-width="2"/>
+ <path d="M1371 171h6v2h-6Z" fill="#ff4d5a" opacity=".8"/>
+</g>
 </svg>
