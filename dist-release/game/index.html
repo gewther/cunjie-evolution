@@ -296,6 +296,338 @@ html,body,#app,#play,#mount,#canvasHost{overscroll-behavior:none}
 #play.imm-hud-faded:not(.in-cinematic) #quick{opacity:.28}
 #play.imm-hud-faded:not(.in-cinematic) #hint{opacity:.14}
 #play.imm-hud-faded #hud:hover,#play.imm-hud-faded #quick:hover{opacity:1}
+
+/* Project Cunjie v6.4 — In-Game HUD & Mobile Portrait/Landscape Clarity Pass */
+#play{
+ --v64-glass:linear-gradient(155deg,rgba(10,23,33,.84),rgba(7,16,24,.74));
+ --v64-glass-pop:rgba(10,23,33,.92);
+ --v64-border:rgba(154,214,204,.34);
+ --v64-border-gold:rgba(244,207,134,.42);
+ --v64-gold:#f4cf86;
+ --v64-text:#eef7f3;
+ --v64-muted:#cfe4dd;
+}
+#play #hud{
+ background:var(--v64-glass);
+ border:1px solid var(--v64-border);
+ border-radius:13px;
+ box-shadow:0 6px 24px rgba(2,9,15,.42);
+ backdrop-filter:blur(10px);
+ -webkit-backdrop-filter:blur(10px);
+ padding:10px 12px;
+}
+#play #hud strong#stageTitle{
+ font-size:clamp(12px,1.3vw,14px);
+ line-height:1.35;
+ padding-right:36px;
+ color:var(--v64-gold);
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+}
+#play #hud #v56Metrics{
+ font-size:clamp(11px,1.15vw,12.5px);
+ color:var(--v64-text);
+ font-variant-numeric:tabular-nums;
+ margin-top:4px;
+}
+#play #hud #stageGoal,
+#play #hud #scoreLine,
+#play #hud #moodLine,
+#play #hud #autopilotStatus,
+#play #hud #practiceLine{
+ font-size:11px;
+ line-height:1.45;
+ color:var(--v64-muted);
+}
+#play #hud .bars{
+ display:grid;
+ grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:6px;
+ margin-top:7px;
+}
+#play #hud .bars label{
+ display:flex;
+ flex-direction:column;
+ align-items:stretch;
+ gap:3px;
+ font-size:10px;
+ font-weight:600;
+ color:var(--v64-muted);
+ min-width:0;
+ flex:none;
+}
+#play #hud .bars i{
+ display:block;
+ width:100%;
+ height:7px;
+ border-radius:999px;
+ background:rgba(255,255,255,.13);
+ box-shadow:inset 0 1px 2px rgba(0,0,0,.48);
+ overflow:hidden;
+}
+#play #hud .bars b{
+ border-radius:999px;
+ transition:width 120ms ease-out;
+}
+#play #hud #feverBar{background:linear-gradient(90deg,#e5a95c,#ffe08a)}
+#play #hud #pressureBar{background:linear-gradient(90deg,#56d8f0,#ff7a6b)}
+#play #hud #staminaBar{background:linear-gradient(90deg,#55c9a8,#a4f0d0)}
+#play #hud #v56HudToggle{
+ right:7px;
+ top:7px;
+ width:30px;
+ height:30px;
+ min-width:30px;
+ min-height:30px;
+ padding:0;
+ border-radius:999px;
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ background:rgba(18,40,50,.85);
+ border:1px solid var(--v64-border);
+ color:var(--v64-text);
+ transition:transform 110ms cubic-bezier(.22,1,.36,1),border-color 140ms ease,background-color 140ms ease;
+}
+#play #hud #v56HudToggle:focus-visible{
+ outline:2px solid var(--v64-gold);
+ outline-offset:2px;
+}
+#play #hud #v59HitEvent{
+ border-radius:999px;
+ padding:3px 10px;
+ font-size:11.5px;
+ background:rgba(13,34,44,.9);
+ border:1px solid rgba(146,222,208,.48);
+ box-shadow:0 2px 10px rgba(4,14,20,.38);
+ animation:v64HudPop .24s cubic-bezier(.18,.89,.32,1.28);
+}
+@keyframes v64HudPop{
+ 0%{opacity:.4;transform:scale(.9)}
+ 100%{opacity:1;transform:scale(1)}
+}
+#play #quick button{
+ min-height:40px;
+ border-radius:10px;
+ background:var(--v64-glass);
+ border:1px solid var(--v64-border);
+ color:var(--v64-text);
+ backdrop-filter:blur(10px);
+ -webkit-backdrop-filter:blur(10px);
+ box-shadow:0 4px 14px rgba(2,9,15,.32);
+ transition:transform 110ms cubic-bezier(.22,1,.36,1),background-color 140ms ease,border-color 140ms ease,box-shadow 140ms ease;
+}
+#play #quick button:active{transform:scale(.94)}
+#play #quick button:focus-visible,
+#play #v56Menu button:focus-visible,
+#play #v56TouchDock button:focus-visible{
+ outline:2px solid var(--v64-gold);
+ outline-offset:2px;
+}
+#play #quick #burstBtn:not(:disabled){
+ border-color:rgba(244,207,134,.75);
+ animation:v64BurstPulse 1.6s ease-in-out infinite;
+}
+@keyframes v64BurstPulse{
+ 0%,100%{box-shadow:0 0 10px rgba(233,164,93,.35)}
+ 50%{box-shadow:0 0 20px rgba(255,216,130,.72)}
+}
+#play #v56Menu{
+ background:var(--v64-glass-pop);
+ border:1px solid var(--v64-border);
+ border-radius:14px;
+ backdrop-filter:blur(12px);
+ -webkit-backdrop-filter:blur(12px);
+ max-height:calc(100dvh - 68px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+ box-shadow:0 16px 42px rgba(2,9,15,.62);
+}
+#play #v56Menu button{
+ min-height:44px;
+ border-radius:10px;
+ border:1px solid rgba(154,214,204,.22);
+ background:rgba(22,45,56,.82);
+}
+#play #speaker,#play.observing #speaker{
+ top:max(10px,env(safe-area-inset-top));
+ left:52%;
+ right:auto;
+ transform:translateX(-50%);
+ max-width:min(44vw,360px);
+ align-items:flex-start;
+ gap:8px;
+}
+@media(max-width:980px){
+ #play #speaker,#play.observing #speaker{top:clamp(54px,12dvh,74px)}
+}
+#play #portrait{
+ border:1.5px solid var(--v64-border-gold);
+ border-radius:11px;
+ background:rgba(12,26,34,.88);
+ box-shadow:0 4px 14px rgba(0,0,0,.45);
+}
+#play #speaker #bubble{
+ max-width:min(44vw,360px);
+ padding:8px 12px;
+ border-radius:12px;
+ border:1px solid var(--v64-border-gold);
+ background:rgba(11,24,33,.9);
+ color:var(--v64-text);
+ font-size:clamp(12.5px,1.25vw,14px);
+ line-height:1.45;
+ -webkit-line-clamp:3;
+ box-shadow:0 6px 20px rgba(2,9,15,.52);
+ backdrop-filter:blur(8px);
+ -webkit-backdrop-filter:blur(8px);
+}
+#play #speaker #bubble:after{
+ background:rgba(11,24,33,.9);
+ border-right-color:var(--v64-border-gold);
+ border-bottom-color:var(--v64-border-gold);
+}
+#play.imm-hud-faded:not(.in-cinematic) #hud{opacity:.44}
+#play.imm-hud-faded:not(.in-cinematic) #quick{opacity:.4}
+#play.imm-hud-faded:not(.in-cinematic) #hint{opacity:.22}
+#play.imm-hud-faded #hud:hover,
+#play.imm-hud-faded #hud:focus-within,
+#play.imm-hud-faded #quick:hover,
+#play.imm-hud-faded #quick:focus-within{opacity:1}
+
+@media(orientation:portrait){
+ #play #hud{
+  width:min(63vw,310px);
+  max-width:63vw;
+  padding:8px 10px;
+ }
+ #play #quick{
+  flex-direction:row;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  align-items:flex-start;
+  max-width:34vw;
+  gap:5px;
+ }
+ #play #quick button{
+  min-height:40px;
+  min-width:40px;
+  padding:6px 8px;
+ }
+ #play #speaker,#play.observing #speaker{
+  top:max(calc(50dvh - 30vw - 74px),calc(var(--v56-safe-t) + 86px));
+  left:50%;
+  transform:translateX(-50%);
+  max-width:92vw;
+ }
+ #play #speaker #bubble{
+  max-width:min(74vw,340px);
+ }
+ #play #v56TouchDock{
+  left:var(--v56-safe-l);
+  right:var(--v56-safe-r);
+  bottom:max(16px,env(safe-area-inset-bottom));
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+ }
+ #play #v56TouchDock button{
+  width:100%;
+  min-height:50px;
+  border-radius:13px;
+  font-size:13.5px;
+  font-weight:700;
+  background:rgba(15,34,44,.88);
+  border:1px solid var(--v64-border);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+ }
+ #play #v56TouchDock button[data-kind="press"]{
+  border-color:rgba(244,207,134,.68);
+  background:rgba(92,58,28,.9);
+  color:#ffebc2;
+ }
+ #play.v56-compact:not(.in-cinematic) #hint,
+ #play:not(.in-cinematic) #hint{
+  display:block;
+  left:50%;
+  right:auto;
+  top:auto;
+  bottom:calc(max(16px,env(safe-area-inset-bottom)) + 62px);
+  transform:translateX(-50%);
+  max-width:90vw;
+  text-align:center;
+  background:rgba(10,23,32,.78);
+  border:1px solid rgba(154,214,204,.22);
+ }
+}
+
+@media(orientation:landscape) and (max-height:520px){
+ #play #hud{
+  width:min(272px,34vw);
+  max-width:34vw;
+  padding:6px 9px;
+ }
+ #play #hud .bars{gap:5px;margin-top:5px}
+ #play #hud .bars label{font-size:10px}
+ #play #hud .bars i{height:6px}
+ #play #quick{
+  flex-wrap:nowrap;
+  gap:4px;
+  max-width:56vw;
+ }
+ #play #quick button{
+  min-height:36px;
+  min-width:36px;
+  padding:5px 7px;
+  font-size:10.5px;
+ }
+ #play #speaker,#play.observing #speaker{
+  top:max(46px,calc(var(--v56-safe-t) + 38px));
+  left:52%;
+  max-width:min(44vw,300px);
+ }
+ #play.v56-compact:not(.in-cinematic) #hint{
+  left:var(--v56-safe-l);
+  bottom:var(--v56-safe-b);
+  top:auto;
+  transform:none;
+  max-width:min(300px,44vw);
+ }
+ #play #v56TouchDock button{
+  background:rgba(12,28,38,.78);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+ }
+}
+@media(orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ #play #quick button{min-height:40px}
+}
+@media(min-aspect-ratio:1.86) and (pointer:coarse){
+ #play #v56TouchDock{
+  left:auto;
+  right:var(--v56-safe-r);
+  bottom:var(--v56-safe-b);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+ }
+ #play #v56TouchDock button{
+  width:clamp(58px,8.5vw,84px);
+  min-height:40px;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ #play #hud *,
+ #play #quick *,
+ #play #v56Menu *,
+ #play #v56TouchDock *,
+ #play #speaker *,
+ #play #v59HitEvent,
+ #play #quick #burstBtn{
+  animation:none!important;
+  transition:none!important;
+  transform:none!important;
+ }
+}
 </style></head><body><main id="app">
 <section id="home"><div class="veil"></div><article><small class="eyebrow">PROJECT 寸界 / EVOLUTION · CONTACT FEEL V2</small><h1>三重领域</h1><p>篮球鞋首幕：承重停顿 · 渐进施压 · 接地尘雾与分层声音。</p>
 <label style="display:block;margin:8px 0;color:#d5e6df">场景光景 <select id="roomTheme" style="padding:7px;background:#20343c;color:#e8f2ec;border:1px solid #72908d;border-radius:6px"><option value="rooftop-day" selected>屋顶球场 · 夕阳</option><option value="rooftop-night">屋顶球场 · 夜景</option><option value="bedroom-wood">雨夜木地板 · 高清</option><option value="warm">午后暖光 · 新</option><option value="rain">雨夜灯光 · 新</option><option value="original">原卧室</option></select></label><script src="scripts/room-choice.js"></script>
