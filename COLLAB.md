@@ -1,6 +1,6 @@
 # COLLAB.md — Cunjie Evolution / Fenrir collaboration whiteboard
 
-Last verified against `main`: `3e41b46` (2026-11-26, after merging PR #4 + PR #3).
+Last verified against `main`: `c36e776` (2026-11-27, with open Draft PRs #5, #6, #7 tracked below).
 This file and `ROADMAP_DUAL_AI.md` are the shared handoff sources of truth. Re-read both at the start of every work session; update them when work is merged or priorities change. If docs conflict with code, tests, CI or the latest merged commit, code and reproducible checks win.
 
 ## 1. Roles and handoff
@@ -43,11 +43,13 @@ This file and `ROADMAP_DUAL_AI.md` are the shared handoff sources of truth. Re-r
 
 ## 4. Verified repository baseline
 
-### Main and recently merged PRs
-- Verified `main` merge base: `3e41b46` (PR #4 + PR #3 merged on 2026-11-26).
-- **PR #4 (merged)**: `fix/mobile-touch-sensitivity` — added `src/free-touch-responsive.js`, `tools/build_free_touch.cjs`, `tools/test_free_touch.cjs` (10 tests), and normalized LF hashing in `tools/build_pwa.py` so Windows and Linux CI produce identical `sw.js` hashes.
-- **PR #3 (merged)**: `feat/fenrir-persona-v3` — added selectable Fenrir AI cadence profiles (`playful` / `deliberate` / `classic`), local preference persistence, `FENRIR_PERSONA_V3.md`, and `COLLAB.md`.
-- No active file locks remain after Stage 0 merge; next planned cloud milestone in `ROADMAP_DUAL_AI.md` is **P5.3 (contextual short dialogue & proactive banter with arbitration/cooldowns)**.
+### Main, recently merged PRs, and active open PRs
+- Verified `main` merge base: `c36e776` (2026-11-26, synced `ROADMAP_DUAL_AI.md`, `COLLAB.md`, and PWA `bf1bedb5` after PR #4 + PR #3).
+- **PR #4 (merged)** & **PR #3 (merged)**: Stage 0 mobile touch responsiveness (`src/free-touch-responsive.js`), deterministic LF PWA hashing, Fenrir persona V3 cadence profiles, and `COLLAB.md`.
+- **Open Draft PR #5** (`feat/fenrir-p53-dialogue` → `main`, `0032f99`, ChatGPT-owned): **P5.3** contextual dialogue & priority arbitration in `src/fenrir-controls.js` and `FENRIR_PERSONA_V3.md`.
+- **Open Draft PR #6** (`feat/art-overhaul-hd` → `main`, Antigravity-owned): HD anime-cel overhaul (`assets/*-hd/`, `src/art-overhaul-v1.js`, `src/art-hd-geo.json`), v6.4 HUD (`dist-release/game/index.html`, `scripts/host-2.js`, `scripts/impact-host-3.js`), immersion/tech-dread (`src/immersion-v1.js`, `src/tech-dread-v1.js`), and Rule 8 high-tech psychological dread docs.
+- **Open Draft PR #7** (`feat/fenrir-city-art-v2` → stacked on `feat/art-overhaul-hd`, `e9b414a`): Fenrir blue-hour service district landmark (`assets/fenrir/city-mid.svg`, `city-near.svg`).
+- **Planned integration order (after user real-device acceptance & explicit approval)**: `#5 → #6 → #7` (re-target `#7` to `main` and re-run `python tools/build_all.py --from-release` after each merge so shared release artifacts `touch-v1-free.js`, `impact-host-3.js`, and `sw.js` stay deterministic).
 
 ### PWA and offline
 - PWA artifacts are present: `dist-release/game/manifest.webmanifest`, `dist-release/game/sw.js`, `dist-release/game/scripts/pwa.js`, `tools/build_pwa.py`, and `tools/test_pwa.cjs`.
@@ -61,7 +63,7 @@ This file and `ROADMAP_DUAL_AI.md` are the shared handoff sources of truth. Re-r
 
 ## 5. Rolling roadmap
 - See `ROADMAP_DUAL_AI.md` for the complete P5–P9 shared plan, file ownership lock matrix, and milestone DoDs.
-- Current next cloud item for ChatGPT: **P5.3 — Contextual short dialogue & proactive banter with cooldown/anti-repeat arbitration** (keeping playful, arrogant teenage-boy Fenrir tone and non-lethal outcomes).
+- P5.3 already has Draft PR #5 awaiting user acceptance; next priority after Stage A integration (`#5 → #6 → #7`) is **P6.2–P6.4** (30 m mecha presence, dynamic grounding/motion trails, camera framing, and mechanical structure feedback) followed by P5.4/P7.
 - Reorder based on the user's real-device playtest feedback. Prefer one small, reviewable increment over a broad rewrite.
 - Apply the producer-approved **high-tech surveillance & psychological dread** aesthetic across P5.3/P5.4 dialogue contrast (cold system telemetry vs. observant Fenrir/Xiaolong remarks), P6 mechanical weight/shadow anticipation/hit-stop, and P7 anomalies & weather/lighting presets as detailed in `ROADMAP_DUAL_AI.md`.
 

@@ -83,7 +83,7 @@
  // --- Mobile Haptics (navigator.vibrate) ---
  let lastVibeAt=0,lastGrindVibeAt=0,lastProxVibeAt=0;
  function immVibrate(pattern,minGapMs=55){
-  if(immPrefs.immersionHaptics===false)return;
+  if(immPrefs.immersionHaptics===false||isReducedMotion()||isLowEffects())return;
   if(typeof navigator==='undefined'||typeof navigator.vibrate!=='function')return;
   const now=typeof performance!=='undefined'?performance.now():Date.now();
   if(now-lastVibeAt<minGapMs)return;

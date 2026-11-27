@@ -211,6 +211,7 @@ function testImmersionDreadCues() {
  const droneFreqs = [];
  const msgListeners = [];
  const ocListeners = {};
+ const vibeCalls = [];
  let simNow = 1000;
  let pawTicks = 0;
  let groundedNow = false;
@@ -220,6 +221,7 @@ function testImmersionDreadCues() {
   setInterval: () => 1,
   clearInterval: () => {},
   performance: { now: () => simNow },
+  navigator: { vibrate: p => { vibeCalls.push(p); return true; } },
   clamp: (v, a, b) => Math.max(a, Math.min(b, v)),
   active: true, pause: false, tr: false, slow: false, hide_paws: false,
   delta: 0.016,
@@ -372,6 +374,43 @@ function testImmersionDreadCues() {
  sandbox.update_paw();
  assert.equal(sandbox.window.__xlImmersionDebug().hitStopActive, false, 'realmTouch.freshTap must cancel hit-stop inline');
  assert.equal(pawTicks, beforeFreshTap + 1, 'freshTap takeover executes immediately with zero frame drop');
+
+ // Haptics accessibility: normal heavy landing vibrates; reduceMotion & lowEffects must suppress vibrate()
+ vibeCalls.length = 0;
+ simNow += 320;
+ groundedNow = false;
+ punchNow = 0;
+ sandbox.update_paw();
+ groundedNow = true;
+ punchNow = 0.85;
+ sandbox.update_paw();
+ assert(vibeCalls.length > 0, 'Heavy landing under normal prefs should trigger navigator.vibrate');
+
+ // reduceMotion suppresses haptics even on heavy landing
+ vibeCalls.length = 0;
+ simNow += 320;
+ groundedNow = false;
+ punchNow = 0;
+ sandbox.realmMood.reduceMotion = true;
+ sandbox.update_paw();
+ groundedNow = true;
+ punchNow = 0.85;
+ sandbox.update_paw();
+ assert.equal(vibeCalls.length, 0, 'reduceMotion must suppress navigator.vibrate');
+ sandbox.realmMood.reduceMotion = false;
+
+ // lowEffects suppresses haptics even on heavy landing
+ vibeCalls.length = 0;
+ simNow += 320;
+ groundedNow = false;
+ punchNow = 0;
+ sandbox.realmMood.lowEffects = true;
+ sandbox.update_paw();
+ groundedNow = true;
+ punchNow = 0.85;
+ sandbox.update_paw();
+ assert.equal(vibeCalls.length, 0, 'lowEffects must suppress navigator.vibrate');
+ sandbox.realmMood.lowEffects = false;
 }
 
 function main() {
