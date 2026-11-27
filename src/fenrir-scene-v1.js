@@ -6,9 +6,9 @@
  const WORLD_WIDTH = 2400;
  const WORLD_HEIGHT = 240;
  const LAYERS = [
-  {key: 'fenrirCityFarV1', url: 'assets/fenrir/city-far.svg', parallax: 0.12},
-  {key: 'fenrirCityMidV1', url: 'assets/fenrir/city-mid.svg', parallax: 0.36},
-  {key: 'fenrirCityNearV1', url: 'assets/fenrir/city-near.svg', parallax: 1}
+  {key: 'fenrirCityFarV1', url: 'assets/fenrir/city-far.svg', parallax: 0.12, rumbleGain: 0.45},
+  {key: 'fenrirCityMidV1', url: 'assets/fenrir/city-mid.svg', parallax: 0.36, rumbleGain: 1},
+  {key: 'fenrirCityNearV1', url: 'assets/fenrir/city-near.svg', parallax: 1, rumbleGain: 0}
  ];
  const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
 
@@ -37,7 +37,9 @@
   const MAX_ROAD_MARKS = 6;
   const MARK_LIFE = 3.2;
   let lastRoadClock = null;
-  status.weight = {compression: 0, roadMarks: 0, landingForce: 0};
+  status.weight = {compression: 0, roadMarks: 0, landingForce: 0, environmentRumble: 0};
+  let impactRumbleAt = null;
+  let impactRumbleForce = 0;
 
   function loadLayer(layer) {
    return new Promise((resolve, reject) => {
@@ -94,6 +96,23 @@
    }
    lastPawX = pawX;
 
+   const prefs = global.__xlImmersionPrefs;
+   let environmentRumble = 0;
+   if (reduced || prefs?.lowEffects) {
+    impactRumbleAt = null;
+    impactRumbleForce = 0;
+   } else if (impactRumbleAt !== null) {
+    const age = (now - impactRumbleAt) / 1000;
+    if (age >= 0 && age < 0.46) {
+     // Distant facades react to a heavy landing; the near road remains world-locked.
+     environmentRumble = Math.sin(age * 58) * Math.exp(-age / 0.18) * impactRumbleForce * 1.25;
+    } else if (age >= 0.46) {
+     impactRumbleAt = null;
+     impactRumbleForce = 0;
+    }
+   }
+   status.weight.environmentRumble = environmentRumble;
+
    let target = status.cameraX;
    if (reduced) {
     target = center;
@@ -138,7 +157,8 @@
     updateCamera();
     for (const layer of LAYERS) {
      const sourceX = clamp(status.cameraX * layer.parallax, 0, maxScroll);
-     spriteScaled.call(this, [layer.key, sourceX, 0, viewW, viewH], x, y, width, height);
+     const layerY = y + status.weight.environmentRumble * layer.rumbleGain;
+     spriteScaled.call(this, [layer.key, sourceX, 0, viewW, viewH], x, layerY, width, height);
     }
     return;
    }
@@ -165,6 +185,8 @@
    const pose = context.getGroundPose();
    if (!pose?.grounded || pose.supported || !Number.isFinite(event.x) || !Number.isFinite(event.at)) return;
    const force = clamp(Number(event.force) || 0, 0, 1);
+   impactRumbleAt = performance.now();
+   impactRumbleForce = Math.max(force, impactRumbleForce * 0.72);
    const width = Math.max(1, Number(pose.width) || 1);
    const x = event.x - width / 2 - pose.offset + width * pose.contactCenter;
    pendingLanding = {x, y: pose.floorY, at: event.at, force, width};

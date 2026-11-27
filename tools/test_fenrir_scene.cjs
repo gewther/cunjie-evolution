@@ -109,6 +109,52 @@ function testPersona() {
  assert.equal(p.status().handoffs, 0);
  assert.equal(p.status().interruptions, 0);
 }
+function testContextualDialogue() {
+ const sandbox = {fenrirCity: false};
+ vm.runInNewContext(controls, sandbox);
+ const p = sandbox.createFenrirPersona();
+ const input = {enabled:false, active:true, paused:false, finished:false,
+  charge:18, overdrive:false, dialogue:true, busy:false, landing:null, hoverFoot:null};
+ const step = (clock, overrides) => p.update({...input, clock, ...overrides});
+ const hoverFoot = {x:140, y:150};
+ assert.equal(step(0, {hoverFoot}), null);
+ assert.equal(step(1, {hoverFoot:{x:155, y:150}}), null, 'movement restarts the hover timer');
+ assert.equal(step(1.5, {hoverFoot}), null);
+ assert.equal(step(2.5, {hoverFoot}), null);
+ const firstHover = step(3, {hoverFoot});
+ assert.equal(firstHover.kind, 'hover');
+ assert.equal(step(8.1, {hoverFoot}), null, 'same hover plays once');
+ step(9);
+ step(10, {hoverFoot});
+ const nextHover = step(11.5, {hoverFoot});
+ assert.equal(nextHover.kind, 'hover');
+ assert.notEqual(nextHover.text, firstHover.text, 'the next hover rotates the line');
+
+ const landing = {};
+ assert.equal(step(20, {landing}), null);
+ assert.equal(step(20.1, {landing}), null, 'repeated frames count as one landing');
+ assert.equal(step(21, {landing:{}}), null);
+ assert.equal(step(22, {landing:{}, busy:true}), null);
+ assert.equal(step(22.1).kind, 'sequence', 'gameplay speech delays the combo line');
+ step(30, {landing:{}});
+ step(35, {landing:{}});
+ assert.equal(step(36, {landing:{}}), null, 'old landings cannot complete a combo');
+ assert.equal(step(37, {landing:{}, paused:true}), null);
+ assert.equal(step(38, {landing:{}}), null, 'a pause clears the combo');
+ step(40, {hoverFoot, dialogue:false});
+ assert.equal(step(42, {hoverFoot}), null, 'muted play does not charge up a hover');
+
+ assert.equal(step(44, {enabled:true}).kind, 'takeover');
+ p.setEnabled(false, 45, true);
+ assert.equal(step(45, {busy:true}), null);
+ assert.equal(step(49).kind, 'interrupted');
+ assert.equal(p.status().interruptions, 1);
+ step(50, {hoverFoot});
+ assert.equal(step(52, {hoverFoot, busy:true}), null);
+ p.setEnabled(true, 53);
+ assert.equal(step(54, {enabled:true}).kind, 'takeover', 'new control phase supersedes queued banter');
+ assert.equal(step(0.1, {hoverFoot}), null, 'a restarted run clears contextual state');
+}
 function testMemory() {
  const sandbox = {fenrirCity: false};
  vm.runInNewContext(controls, sandbox);
@@ -207,6 +253,7 @@ function testCadence() {
 }
 async function main() {
  testPersona();
+ testContextualDialogue();
  testMemory();
  testCadence();
  const env = createScene();
@@ -222,6 +269,36 @@ async function main() {
  assert.equal(status.cameraX, 1000);
  assert.deepEqual(calls.map(([sprite]) => sprite[0]), ['fenrirCityFarV1', 'fenrirCityMidV1', 'fenrirCityNearV1']);
  assert.deepEqual(calls.map(([sprite]) => sprite[1]), [120, 360, 1000]);
+
+ // P6.2: heavy landings transmit a short vibration through the city depth.
+ const rumble = createScene();
+ await new Promise(resolve => setImmediate(resolve));
+ rumble.api.recordLanding({kind: 'landing', x: 200, at: 1, force: 0.9});
+ rumble.draw();
+ const rumbleDraws = rumble.calls.slice(-3);
+ const [farY, midY, nearY] = rumbleDraws.map(([, , y]) => y);
+ assert(Math.abs(midY) > Math.abs(farY), 'mid buildings react more strongly than the distant skyline');
+ assert.notEqual(midY, 0, 'heavy landing must create a visible mid-layer response');
+ assert.equal(nearY, 0, 'near road must remain world-locked during building vibration');
+ assert.notEqual(rumble.status.weight.environmentRumble, 0);
+ rumble.window.__xlImmersionPrefs.reduceMotion = true;
+ rumble.draw();
+ assert.equal(rumble.status.weight.environmentRumble, 0, 'reduced motion suppresses building vibration');
+ assert.deepEqual(rumble.calls.slice(-3).map(([, , y]) => y), [0, 0, 0]);
+
+ const lowFxRumble = createScene();
+ await new Promise(resolve => setImmediate(resolve));
+ lowFxRumble.api.recordLanding({kind: 'landing', x: 200, at: 1, force: 1});
+ lowFxRumble.window.__xlImmersionPrefs.lowEffects = true;
+ lowFxRumble.draw();
+ assert.equal(lowFxRumble.status.weight.environmentRumble, 0, 'low-effects mode suppresses building vibration');
+
+ const decayRumble = createScene();
+ await new Promise(resolve => setImmediate(resolve));
+ decayRumble.api.recordLanding({kind: 'landing', x: 200, at: 1, force: 0.9});
+ decayRumble.draw();
+ for (let i = 0; i < 40; i++) decayRumble.draw();
+ assert.equal(decayRumble.status.weight.environmentRumble, 0, 'building vibration decays without a lingering offset');
 
  env.setPawX(300);
  env.draw();
