@@ -356,8 +356,20 @@
   }
  }
 
- // --- Tactile Hit-Stop, Proximity & Breathing Camera State ---
- let hitStopLeft=0,hitStopCooldown=0;
+ // --- Tactile Hit-Stop (real-time, cancellable on manual takeover), Proximity & Breathing Camera State ---
+ const nowReal=()=>((typeof performance!=='undefined'&&typeof performance.now==='function')?performance.now():Date.now());
+ let hitStopUntil=0,hitStopCooldownUntil=0;
+ const isHitStopped=()=>hitStopUntil>nowReal();
+ function cancelHitStop(){hitStopUntil=0;}
+ if(typeof oc!=='undefined'&&oc&&typeof oc.addEventListener==='function'){
+  oc.addEventListener('touchstart',cancelHitStop,{passive:true});
+  oc.addEventListener('pointerdown',cancelHitStop,{passive:true});
+ }
+ if(typeof window.addEventListener==='function'){
+  window.addEventListener('touchstart',cancelHitStop,{passive:true});
+  window.addEventListener('pointerdown',cancelHitStop,{passive:true});
+  window.addEventListener('keydown',cancelHitStop,{passive:true});
+ }
  let prevGrounded=false,prevProx=0;
  let camZoom=1,camFocusX=w*0.5;
  let rainLensTimer=1.8;
@@ -375,10 +387,11 @@
    immVibrate(Math.round(16+Math.min(1,force)*28),70);
   }
 
-  // Hit-stop on heavy impacts (28-50ms)
-  if(!isReducedMotion()&&!slow&&force>=0.42&&hitStopCooldown<=0){
-   hitStopLeft=clamp(0.026+force*0.024+(isOverdrive?0.01:0),0.026,0.052);
-   hitStopCooldown=0.28;
+  // Real-time Hit-stop on heavy impacts (26-52ms)
+  const tNow=nowReal();
+  if(!isReducedMotion()&&!slow&&force>=0.42&&tNow>=hitStopCooldownUntil){
+   hitStopUntil=tNow+clamp(26+force*24+(isOverdrive?10:0),26,52);
+   hitStopCooldownUntil=tNow+280;
   }
 
   // Foreground lens droplets or rooftop dust gust
@@ -407,19 +420,20 @@
  const immOldUpdateBugs=typeof update_bugs==='function'?update_bugs:null;
  if(immOldUpdateBugs){
   update_bugs=function(){
-   if(hitStopLeft>0&&active&&!pause&&!tr)return;
+   if(isHitStopped()&&active&&!pause&&!tr)return;
    return immOldUpdateBugs.apply(this,arguments);
   };
  }
 
- // Wrap update_paw for hit-stop, ambience, landing detection, lens drops, and haptics
+ // Wrap update_paw for real-time hit-stop (yields immediately on manual takeover), ambience, landing, lens drops, and haptics
  const immOldUpdatePaw=typeof update_paw==='function'?update_paw:null;
  if(immOldUpdatePaw){
   update_paw=function(){
+   if(typeof realmTouch!=='undefined'&&realmTouch&&realmTouch.freshTap){
+    cancelHitStop();
+   }
    const step=Math.min(0.05,(typeof delta==='number'&&delta>0)?delta:0.016);
-   if(hitStopCooldown>0)hitStopCooldown=Math.max(0,hitStopCooldown-step);
-   if(hitStopLeft>0&&active&&!pause&&!tr){
-    hitStopLeft=Math.max(0,hitStopLeft-Math.min(0.025,step));
+   if(isHitStopped()&&active&&!pause&&!tr){
     return;
    }
    immOldUpdatePaw.apply(this,arguments);
@@ -505,14 +519,15 @@
   set_yoff=function(off){
    immOldSetYoff(off);
    if(pause||slow||isReducedMotion()||(typeof xlGfxPrefs!=='undefined'&&!xlGfxPrefs.shake))return;
-   if(camZoom<=1.0015&&hitStopLeft<=0)return;
+   const hsActive=isHitStopped();
+   if(camZoom<=1.0015&&!hsActive)return;
    const ox=clamp((camFocusX/Math.max(1,w))*100,18,82).toFixed(1);
    const cur=oc.style.transform||'';
    if(!cur){
     oc.style.transformOrigin=`${ox}% 78%`;
-    const hs=hitStopLeft>0?1.008:1;
+    const hs=hsActive?1.008:1;
     oc.style.transform=`scale(${(camZoom*hs).toFixed(4)})`;
-   }else if(hitStopLeft>0){
+   }else if(hsActive){
     oc.style.transform=cur+' scale(1.008)';
    }
   };
@@ -708,6 +723,7 @@ body.imm-hud-faded #xl-hud:hover,body.imm-hud-faded #fn-dock:hover{opacity:1;}
   camZoom:Number(camZoom.toFixed(4)),
   dreadMode,
   dreadLevel:Number(lastDreadLevel.toFixed(3)),
+  hitStopActive:isHitStopped(),
   prefs:{...immPrefs}
  });
 })();

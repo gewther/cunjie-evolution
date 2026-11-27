@@ -120,27 +120,43 @@
 #tdv1Overlay .td-c-tr{top:0;right:0;border-width:1.5px 1.5px 0 0}
 #tdv1Overlay .td-c-bl{bottom:0;left:0;border-width:0 0 1.5px 1.5px}
 #tdv1Overlay .td-c-br{bottom:0;right:0;border-width:0 1.5px 1.5px 0}
-#tdv1Telemetry{
+#play #hud #tdv1Telemetry,
+#tdv1Overlay #tdv1Telemetry{
+ position:static;
+ transform:none;
+ display:block;
+ margin-top:6px;
+ padding-top:4px;
+ border-top:1px solid rgba(72,229,255,.20);
+ background:transparent;
+ border-radius:0;
+ color:#9fdff0;
+ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+ font-size:9.5px;
+ letter-spacing:.04em;
+ line-height:1.35;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+}
+#tdv1Overlay #tdv1Telemetry{
  position:absolute;
  left:50%;
  bottom:max(8px,env(safe-area-inset-bottom));
  transform:translateX(-50%);
+ margin-top:0;
  padding:2px 9px;
+ border-top:none;
  border-radius:999px;
  background:rgba(6,16,24,.72);
  border:1px solid rgba(72,229,255,.26);
- color:#9fdff0;
- font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
- font-size:10px;
- letter-spacing:.06em;
- white-space:nowrap;
  max-width:92vw;
- overflow:hidden;
- text-overflow:ellipsis;
  text-shadow:0 1px 4px rgba(0,0,0,.7);
 }
+#play #hud #tdv1Telemetry.td-tel-alert,
 #tdv1Overlay.td-alert #tdv1Telemetry{
  border-color:rgba(255,77,90,.56);
+ border-top-color:rgba(255,77,90,.46);
  color:#ffb4bc;
 }
 #tdv1Overlay.td-glitch{
@@ -155,32 +171,29 @@
 :root[data-td-dread-mode="soft"] #tdv1Overlay .td-corners i{border-color:rgba(72,229,255,.20)}
 :root[data-td-dread-mode="soft"] #tdv1Overlay.td-alert .td-vignette{box-shadow:inset 0 0 calc(14px + var(--td-dread) * 14px) rgba(255,77,90,.12)}
 :root[data-td-dread-mode="soft"] #tdv1Overlay.td-alert .td-corners i{border-color:rgba(255,77,90,.36)}
-:root[data-td-dread-mode="soft"] #tdv1Overlay.td-alert #tdv1Telemetry{border-color:rgba(255,77,90,.40);color:#f3a8b0}
+:root[data-td-dread-mode="soft"] #tdv1Overlay.td-alert #tdv1Telemetry,
+:root[data-td-dread-mode="soft"] #play #hud #tdv1Telemetry.td-tel-alert{border-color:rgba(255,77,90,.40);border-top-color:rgba(255,77,90,.34);color:#f3a8b0}
 :root[data-td-dread-mode="off"] #tdv1Overlay,
+:root[data-td-dread-mode="off"] #tdv1Telemetry,
 #play[hidden] #tdv1Overlay,
 #play.in-cinematic #tdv1Overlay,
+#play.in-cinematic #tdv1Telemetry,
 #app[data-v58-mode="cinematic"] #tdv1Overlay,
+#app[data-v58-mode="cinematic"] #tdv1Telemetry,
 #play.v56-legacy #tdv1Overlay,
-#play.custom-motion #tdv1Overlay{display:none!important}
+#play.v56-legacy #tdv1Telemetry,
+#play.custom-motion #tdv1Overlay,
+#play.custom-motion #tdv1Telemetry{display:none!important}
 #play.observing #tdv1Telemetry{display:none!important}
 #tdv1Overlay.td-lowfx .td-scanlines,
 #tdv1Overlay.td-lowfx .td-vignette{display:none!important}
 #tdv1Overlay.td-rm .td-vignette{box-shadow:none!important;transition:none!important}
 #tdv1Overlay.td-rm .td-corners i{transition:none!important}
-@media(orientation:portrait){
- #tdv1Telemetry{
-  left:var(--v56-safe-l,10px);
-  top:calc(max(10px,env(safe-area-inset-top)) + 98px);
-  bottom:auto;
-  transform:none;
-  max-width:68vw;
- }
-}
 @media(max-height:520px) and (orientation:landscape){
- #tdv1Telemetry{
-  bottom:max(6px,env(safe-area-inset-bottom));
-  font-size:9.5px;
-  padding:2px 7px;
+ #play #hud #tdv1Telemetry{
+  margin-top:4px;
+  padding-top:3px;
+  font-size:9px;
  }
 }
 @media(prefers-reduced-motion:reduce){
@@ -272,6 +285,9 @@
     overlay.classList.toggle('td-alert',mode!=='off'&&lastRawDread>=0.68);
    }
   }
+  if(telemetryEl&&telemetryEl.classList){
+   telemetryEl.classList.toggle('td-tel-alert',mode!=='off'&&lastRawDread>=0.68);
+  }
  }
  function broadcastMode(){
   try{
@@ -310,12 +326,21 @@
    overlay=document.createElement('div');
    overlay.id='tdv1Overlay';
    overlay.setAttribute('aria-hidden','true');
-   overlay.innerHTML='<div class="td-vignette"></div><div class="td-scanlines"></div><div class="td-corners"><i class="td-c-tl"></i><i class="td-c-tr"></i><i class="td-c-bl"></i><i class="td-c-br"></i></div><div id="tdv1Telemetry">REC ● SECTOR-01 · SCALE 30.0m · LOAD 000 kPa · STANDBY</div>';
+   overlay.innerHTML='<div class="td-vignette"></div><div class="td-scanlines"></div><div class="td-corners"><i class="td-c-tl"></i><i class="td-c-tr"></i><i class="td-c-bl"></i><i class="td-c-br"></i></div>';
    play.appendChild(overlay);
-   telemetryEl=overlay.querySelector?overlay.querySelector('#tdv1Telemetry'):document.getElementById('tdv1Telemetry');
   }else if(!overlay){
    overlay=document.getElementById('tdv1Overlay');
-   telemetryEl=document.getElementById('tdv1Telemetry');
+  }
+  const hud=document.getElementById('hud');
+  const hostTarget=hud||overlay;
+  telemetryEl=telemetryEl||document.getElementById('tdv1Telemetry');
+  if(!telemetryEl&&hostTarget){
+   telemetryEl=document.createElement('div');
+   telemetryEl.id='tdv1Telemetry';
+   telemetryEl.textContent='REC ● SECTOR-01 · SCALE 30.0m · LOAD 000 kPa · STANDBY';
+   hostTarget.appendChild(telemetryEl);
+  }else if(telemetryEl&&hud&&telemetryEl.parentNode!==hud){
+   hud.appendChild(telemetryEl);
   }
   const menu=document.getElementById('v56Menu');
   if(menu&&!document.getElementById('tdv1ModeBtn')){

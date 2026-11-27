@@ -9,6 +9,7 @@ const releaseGame = path.join(root, 'dist-release', 'game');
 
 function testFilesAndPaths() {
  const src = fs.readFileSync(path.join(root, 'src', 'tech-dread-v1.js'), 'utf8').replace(/\r\n/g, '\n');
+ assert(!src.includes('+ 98px'), 'Telemetry must anchor to #hud rather than hardcoded + 98px offset');
  const relPath = path.join(releaseGame, 'scripts', 'tech-dread-v1.js');
  assert(fs.existsSync(relPath), 'Missing release script scripts/tech-dread-v1.js');
  const rel = fs.readFileSync(relPath, 'utf8').replace(/\r\n/g, '\n');
@@ -95,12 +96,15 @@ function testHostTerminalBehavior() {
  const created = new Map();
  const home = makeFakeElement('home', 'section');
  const play = makeFakeElement('play', 'section');
+ const hud = makeFakeElement('hud', 'div');
+ play.appendChild(hud);
  const menu = makeFakeElement('v56Menu', 'nav');
  const perfBtn = makeFakeElement('v56PerfBtn', 'button');
  menu.appendChild(perfBtn);
  const mount = makeFakeElement('mount', 'div');
  created.set('home', home);
  created.set('play', play);
+ created.set('hud', hud);
  created.set('v56Menu', menu);
  created.set('v56PerfBtn', perfBtn);
  created.set('mount', mount);
@@ -161,6 +165,7 @@ function testHostTerminalBehavior() {
  assert(api, '__cunjieTechDread must be exposed');
  assert.equal(api.getMode(), 'standard');
  assert(created.has('tdv1Overlay'), 'Must mount #tdv1Overlay inside #play');
+ assert(created.has('tdv1Telemetry') && created.get('tdv1Telemetry').parentNode === hud, '#tdv1Telemetry must anchor inside #hud');
  assert(created.has('tdv1ModeBtn'), 'Must inject #tdv1ModeBtn into #v56Menu');
  assert.equal(home.classList.contains('td-home-active'), true);
 
@@ -169,6 +174,7 @@ function testHostTerminalBehavior() {
  assert(s1.dread > 0.7, 'High pressure + silence should elevate dread');
  assert(s1.telemetry.includes('SECTOR-03') && s1.telemetry.includes('SIGNAL VOID'), `Unexpected telemetry: ${s1.telemetry}`);
  assert.equal(created.get('tdv1Overlay').classList.contains('td-alert'), true);
+ assert.equal(created.get('tdv1Telemetry').classList.contains('td-tel-alert'), true);
  assert.equal(created.get('tdv1Overlay').classList.contains('td-glitch'), true);
 
  assert.equal(api.cycleMode(), 'soft');
@@ -179,6 +185,7 @@ function testHostTerminalBehavior() {
  assert(api.snapshot().rawDread >= 0.68, 'Soft mode should keep rawDread high');
  assert(api.snapshot().telemetry.includes('HIGH LOAD'), `Soft mode must still report HIGH LOAD, got: ${api.snapshot().telemetry}`);
  assert.equal(created.get('tdv1Overlay').classList.contains('td-alert'), true);
+ assert.equal(created.get('tdv1Telemetry').classList.contains('td-tel-alert'), true);
 
  // reduceMotion must freeze HUD --td-dread vignette and apply td-rm
  store.set('cunjie-stomp-impact-v1', JSON.stringify({ version: 2, prefs: { sound: true, volume: 0.5, reduceMotion: true, lowEffects: false } }));
@@ -203,11 +210,16 @@ function testImmersionDreadCues() {
  const gains = [];
  const droneFreqs = [];
  const msgListeners = [];
+ const ocListeners = {};
+ let simNow = 1000;
+ let pawTicks = 0;
+ let groundedNow = false;
+ let punchNow = 0;
  const sandbox = {
   Math, Number, Array, Object, Set, Map, Date, JSON,
   setInterval: () => 1,
   clearInterval: () => {},
-  performance: { now: () => 1000 },
+  performance: { now: () => simNow },
   clamp: (v, a, b) => Math.max(a, Math.min(b, v)),
   active: true, pause: false, tr: false, slow: false, hide_paws: false,
   delta: 0.016,
@@ -217,14 +229,15 @@ function testImmersionDreadCues() {
   realmMood: { special: 'silence', reduceMotion: false, lowEffects: false },
   realmPrefs: { sound: true, footstepVolume: 0.8 },
   realmBurstTime: 0,
+  realmTouch: { freshTap: false },
   fenrirCity: false,
   xlGfxPrefs: { shake: true },
-  evoContact: { grounded: false, punch: () => 0 },
-  update_paw: () => {},
+  evoContact: { get grounded() { return groundedNow; }, punch: () => punchNow },
+  update_paw: () => { pawTicks++; },
   update_bugs: () => {},
   set_yoff: () => {},
   draw: () => {},
-  oc: { style: {} },
+  oc: { style: {}, addEventListener: (t, fn) => { (ocListeners[t] ||= []).push(fn); } },
   occ: {
    save: () => {}, restore: () => {}, setTransform: () => {},
    beginPath: () => {}, moveTo: (x, y) => occCalls.push(['moveTo', x, y]), lineTo: () => {},
@@ -306,6 +319,59 @@ function testImmersionDreadCues() {
  assert.equal(sandbox.window.__xlImmersionDebug().dreadMode, 'off');
  assert.equal(sandbox.window.__xlImmersionDebug().dreadLevel, 0);
  assert(!occCalls.some(c => c[0] === 'text' && String(c[1]).startsWith('ALT ')), 'Off mode must disable reticle');
+
+ // Real-time hit-stop must auto-recover by wall clock AND yield immediately on manual takeover
+ groundedNow = false;
+ punchNow = 0;
+ sandbox.update_paw();
+ const ticksBeforeHit = pawTicks;
+ groundedNow = true;
+ punchNow = 0.85;
+ sandbox.update_paw();
+ assert.equal(pawTicks, ticksBeforeHit + 1, 'Landing impact tick itself executes');
+ assert.equal(sandbox.window.__xlImmersionDebug().hitStopActive, true, 'Heavy landing triggers real-time hit-stop');
+
+ // Inside hit-stop (< 40 ms), update_paw pauses
+ simNow += 20;
+ sandbox.update_paw();
+ assert.equal(pawTicks, ticksBeforeHit + 1, 'update_paw stays frozen during real-time hit-stop window');
+
+ // Once real time passes > 55 ms, hit-stop auto-releases without needing extra frames
+ simNow += 45;
+ assert.equal(sandbox.window.__xlImmersionDebug().hitStopActive, false, 'Real-time hit-stop must recover once wall clock expires');
+ sandbox.update_paw();
+ assert.equal(pawTicks, ticksBeforeHit + 2, 'update_paw resumes cleanly after hit-stop');
+
+ // Next heavy landing after cooldown: manual touchstart takeover immediately cancels hit-stop
+ simNow += 320;
+ groundedNow = false;
+ punchNow = 0;
+ sandbox.update_paw();
+ groundedNow = true;
+ punchNow = 0.9;
+ sandbox.update_paw();
+ assert.equal(sandbox.window.__xlImmersionDebug().hitStopActive, true);
+ assert(Array.isArray(ocListeners.touchstart) && ocListeners.touchstart.length > 0, 'touchstart takeover listener must be bound on oc');
+ ocListeners.touchstart.forEach(fn => fn());
+ assert.equal(sandbox.window.__xlImmersionDebug().hitStopActive, false, 'Manual touchstart must cancel hit-stop immediately');
+ const beforeTakeover = pawTicks;
+ sandbox.update_paw();
+ assert.equal(pawTicks, beforeTakeover + 1, 'Manual takeover executes immediately on the very next update_paw tick');
+
+ // freshTap during hit-stop also cancels hit-stop inline inside update_paw
+ simNow += 320;
+ groundedNow = false;
+ punchNow = 0;
+ sandbox.update_paw();
+ groundedNow = true;
+ punchNow = 0.9;
+ sandbox.update_paw();
+ assert.equal(sandbox.window.__xlImmersionDebug().hitStopActive, true);
+ const beforeFreshTap = pawTicks;
+ sandbox.realmTouch.freshTap = true;
+ sandbox.update_paw();
+ assert.equal(sandbox.window.__xlImmersionDebug().hitStopActive, false, 'realmTouch.freshTap must cancel hit-stop inline');
+ assert.equal(pawTicks, beforeFreshTap + 1, 'freshTap takeover executes immediately with zero frame drop');
 }
 
 function main() {
