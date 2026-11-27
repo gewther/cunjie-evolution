@@ -16,6 +16,18 @@
   <rect x="13" y="4" width="4" height="5" rx=".5" fill="#f0c783" opacity=".24"/>
   <rect x="8" y="12" width="5" height="4" rx=".5" fill="#7dc5d8" opacity=".18"/>
  </pattern>
+ <linearGradient id="scaleTowerGlass" x1="0" y1="0" x2="1" y2="0">
+  <stop offset="0" stop-color="#071522"/>
+  <stop offset=".42" stop-color="#122c3d"/>
+  <stop offset=".78" stop-color="#0a1d2b"/>
+  <stop offset="1" stop-color="#04101a"/>
+ </linearGradient>
+ <pattern id="scaleTowerWindows" width="30" height="30" patternUnits="userSpaceOnUse">
+  <rect x="5" y="5" width="7" height="12" rx=".7" fill="#9addec" opacity=".34"/>
+  <rect x="18" y="5" width="7" height="12" rx=".7" fill="#e9c98b" opacity=".20"/>
+  <rect x="5" y="22" width="7" height="5" rx=".5" fill="#6dc9df" opacity=".16"/>
+  <rect x="18" y="22" width="7" height="5" rx=".5" fill="#8bd9e9" opacity=".12"/>
+ </pattern>
 </defs>
 <rect width="2400" height="240" fill="url(#sky)"/>
 <rect width="2400" height="240" fill="url(#halo1)"/>
@@ -23,6 +35,54 @@
 <!-- High rain cloud ridges -->
 <path d="M0 36Q140 16 290 34T620 26T950 38T1290 24T1640 37T1980 25T2400 35V92H0Z" fill="url(#cloud)"/>
 <path d="M0 64Q180 48 360 62T760 56T1150 66T1580 54T1990 65T2400 59V118H0Z" fill="url(#cloud)" opacity=".7"/>
+<!-- Tower-scale facades deliberately leave the top of frame: the city continues above this 15 m ground-level crop. -->
+<g id="tower-scale-cues" data-reference-height="30m" opacity=".62">
+ <g>
+  <path d="M-36 -180H250L350 171H-36Z" fill="url(#scaleTowerGlass)" stroke="#6e9fb1" stroke-opacity=".30"/>
+  <path d="M-36 -180H250L350 171H-36Z" fill="url(#scaleTowerWindows)" opacity=".76"/>
+  <path d="M250 -180L350 171H316L218 -180Z" fill="#04111c" opacity=".66"/>
+  <path d="M12 -180L106 171M78 -180L172 171M144 -180L238 171" stroke="#8ac5d5" stroke-opacity=".17" stroke-width="2"/>
+  <path d="M-36 -70H282M-36 38H313M-36 132H339" stroke="#8ac5d5" stroke-opacity=".13"/>
+  <path d="M-12 -180L82 171" stroke="#6de1f3" stroke-opacity=".40" stroke-width="2"/>
+  <path d="M-28 14h8m-8 6h8m-8 6h8" stroke="#f0c47a" stroke-opacity=".56" stroke-width="2"/>
+ </g>
+ <g>
+  <path d="M478 -220H716L808 169H478Z" fill="url(#scaleTowerGlass)" stroke="#6e9fb1" stroke-opacity=".28"/>
+  <path d="M478 -220H716L808 169H478Z" fill="url(#scaleTowerWindows)" opacity=".68"/>
+  <path d="M716 -220L808 169H774L680 -220Z" fill="#04111c" opacity=".72"/>
+  <path d="M518 -220L590 169M580 -220L652 169M642 -220L714 169" stroke="#8ac5d5" stroke-opacity=".15" stroke-width="2"/>
+  <path d="M478 -90H748M478 20H775M478 126H798" stroke="#8ac5d5" stroke-opacity=".12"/>
+  <path d="M700 -220L790 150" stroke="#6de1f3" stroke-opacity=".34" stroke-width="2"/>
+  <circle cx="696" cy="8" r="2.2" fill="#f06a67" opacity=".78"/>
+ </g>
+ <g>
+  <path d="M946 -250H1194L1280 170H946Z" fill="url(#scaleTowerGlass)" stroke="#6e9fb1" stroke-opacity=".28"/>
+  <path d="M946 -250H1194L1280 170H946Z" fill="url(#scaleTowerWindows)" opacity=".72"/>
+  <path d="M1194 -250L1280 170H1244L1158 -250Z" fill="#04111c" opacity=".72"/>
+  <path d="M984 -250L1058 170M1050 -250L1124 170M1116 -250L1190 170" stroke="#8ac5d5" stroke-opacity=".16" stroke-width="2"/>
+  <path d="M946 -120H1220M946 -12H1242M946 102H1266" stroke="#8ac5d5" stroke-opacity=".13"/>
+  <path d="M1178 -250L1264 152" stroke="#6de1f3" stroke-opacity=".36" stroke-width="2"/>
+  <circle cx="1177" cy="11" r="2.3" fill="#f06a67" opacity=".82"/>
+ </g>
+ <g>
+  <path d="M1480 -205H1724L1820 170H1480Z" fill="url(#scaleTowerGlass)" stroke="#6e9fb1" stroke-opacity=".28"/>
+  <path d="M1480 -205H1724L1820 170H1480Z" fill="url(#scaleTowerWindows)" opacity=".70"/>
+  <path d="M1724 -205L1820 170H1784L1688 -205Z" fill="#04111c" opacity=".70"/>
+  <path d="M1520 -205L1592 170M1584 -205L1656 170M1648 -205L1720 170" stroke="#8ac5d5" stroke-opacity=".15" stroke-width="2"/>
+  <path d="M1480 -80H1756M1480 28H1782M1480 130H1808" stroke="#8ac5d5" stroke-opacity=".12"/>
+  <path d="M1708 -205L1802 152" stroke="#6de1f3" stroke-opacity=".34" stroke-width="2"/>
+  <circle cx="1706" cy="9" r="2.2" fill="#f06a67" opacity=".80"/>
+ </g>
+ <g>
+  <path d="M1988 -220H2300L2400 170H1988Z" fill="url(#scaleTowerGlass)" stroke="#6e9fb1" stroke-opacity=".28"/>
+  <path d="M1988 -220H2300L2400 170H1988Z" fill="url(#scaleTowerWindows)" opacity=".72"/>
+  <path d="M2300 -220L2400 170H2364L2262 -220Z" fill="#04111c" opacity=".72"/>
+  <path d="M2030 -220L2106 170M2098 -220L2174 170M2166 -220L2242 170" stroke="#8ac5d5" stroke-opacity=".15" stroke-width="2"/>
+  <path d="M1988 -92H2330M1988 20H2358M1988 126H2386" stroke="#8ac5d5" stroke-opacity=".12"/>
+  <path d="M2284 -220L2380 152" stroke="#6de1f3" stroke-opacity=".34" stroke-width="2"/>
+  <circle cx="2280" cy="10" r="2.2" fill="#f06a67" opacity=".80"/>
+ </g>
+</g>
 <!-- Distant hazy backdrop spires -->
 <path d="M0 164V102H48V122H92V78H136V128H190V64H250V132H305V52H366V118H418V92H468V130H530V69H595V120H642V82H698V126H760V58H832V122H880V94H938V132H1000V68H1065V124H1120V88H1172V164ZM1200 164V94H1254V126H1312V62H1380V128H1438V48H1504V122H1558V86H1618V128H1684V62H1748V122H1802V90H1866V132H1928V54H1996V124H2054V82H2112V128H2176V52H2244V122H2300V88H2356V124H2400V164Z" fill="#0e2638" opacity=".62"/>
 <!-- Far district silhouette A + B -->

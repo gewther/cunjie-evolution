@@ -21,6 +21,9 @@ for (const name of names) {
  assert.match(svg, /<svg[^>]*width="2400"[^>]*height="240"[^>]*viewBox="0 0 2400 240"/);
  assert(svg.trim().endsWith('</svg>'));
 }
+const far = read(game, 'assets/fenrir/city-far.svg');
+assert(far.includes('id="tower-scale-cues"'), 'Far skyline must include cropped tower-scale facades');
+assert(far.includes('data-reference-height="30m"'), 'Tower art must document the 30 m scale cue');
 const near = read(game, 'assets/fenrir/city-near.svg');
 assert(near.includes('M0 194H2400V240H0Z'));
 assert(near.includes('M20 228h42'), 'lane markings align with the contact plane');
@@ -222,6 +225,36 @@ async function main() {
  assert.equal(status.cameraX, 1000);
  assert.deepEqual(calls.map(([sprite]) => sprite[0]), ['fenrirCityFarV1', 'fenrirCityMidV1', 'fenrirCityNearV1']);
  assert.deepEqual(calls.map(([sprite]) => sprite[1]), [120, 360, 1000]);
+ assert.deepEqual(calls.map(([, , y]) => y), [0, 0, 0]);
+
+ // P6: a heavy landing briefly vibrates distant towers while the near road stays locked.
+ const rumble = createScene();
+ await new Promise(resolve => setImmediate(resolve));
+ rumble.api.recordLanding({kind: 'landing', x: 200, at: 1, force: 0.9});
+ rumble.draw();
+ const rumbleDraws = rumble.calls.slice(-3);
+ const [farY, midY, nearY] = rumbleDraws.map(([, , y]) => y);
+ assert(Math.abs(midY) > Math.abs(farY), 'mid buildings react more strongly than the distant skyline');
+ assert.notEqual(midY, 0, 'heavy landing must create a visible mid-layer response');
+ assert.equal(nearY, 0, 'near road must remain world-locked during building vibration');
+ assert.notEqual(rumble.status.weight.environmentRumble, 0);
+ rumble.window.__xlImmersionPrefs.reduceMotion = true;
+ rumble.draw();
+ assert.equal(rumble.status.weight.environmentRumble, 0, 'reduced motion suppresses building vibration');
+ assert.deepEqual(rumble.calls.slice(-3).map(([, , y]) => y), [0, 0, 0]);
+
+ const lowFxRumble = createScene();
+ await new Promise(resolve => setImmediate(resolve));
+ lowFxRumble.api.recordLanding({kind: 'landing', x: 200, at: 1, force: 1});
+ lowFxRumble.window.__xlImmersionPrefs.lowEffects = true;
+ lowFxRumble.draw();
+ assert.equal(lowFxRumble.status.weight.environmentRumble, 0, 'low-effects mode suppresses building vibration');
+ const decayRumble = createScene();
+ await new Promise(resolve => setImmediate(resolve));
+ decayRumble.api.recordLanding({kind: 'landing', x: 200, at: 1, force: 0.9});
+ decayRumble.draw();
+ for (let i = 0; i < 40; i++) decayRumble.draw();
+ assert.equal(decayRumble.status.weight.environmentRumble, 0, 'building vibration decays without a lingering offset');
 
  env.setPawX(300);
  env.draw();
