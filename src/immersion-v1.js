@@ -299,8 +299,8 @@
 
   // Proximity low-pass muffling + sudden silence vacuum before heavy impact
   const inSilenceMood=isStory&&typeof realmMood!=='undefined'&&realmMood&&realmMood.special==='silence';
-  const loomDrop=!prevGrounded&&prox>0.82&&typeof paw_y_velo==='number'&&paw_y_velo>480;
-  const inVacuum=dreadMode!=='off'&&(inSilenceMood||loomDrop);
+  const loomDrop=isAirborneDescending(0.82,480);
+  const inVacuum=dreadMode!=='off'&&!isLowEffects()&&!isReducedMotion()&&(inSilenceMood||loomDrop);
   const vacuumMul=inVacuum?(dreadMode==='soft'?0.45:0.18):1;
   const cut=openCut-(openCut-muffCut)*Math.pow(prox,1.15);
   safeRamp(g.flt1.frequency,l1Freq,at,0.12);
@@ -394,6 +394,13 @@
   if(typeof evoContact!=='undefined'&&evoContact)return evoContact;
   if(typeof window.xlFreeContact!=='undefined'&&window.xlFreeContact)return window.xlFreeContact;
   return null;
+ }
+ function isAirborneDescending(minProx,minVelo){
+  const ct=currentContact();
+  const grounded=ct?!!ct.grounded:(typeof paw_state!=='undefined'&&paw_state>=3);
+  if(grounded)return false;
+  const p=active&&!pause&&!tr?clamp((paw_y-h*0.26)/Math.max(1,floor_y-h*0.26),0,1):0;
+  return p>minProx&&typeof paw_y_velo==='number'&&paw_y_velo>minVelo;
  }
 
  // Wrap update_bugs so hit-stop pauses crowd motion in sync with paw
@@ -548,7 +555,7 @@
     }
 
     // 1b. Contracting High-Tech Surveillance Target Reticle (airborne descent only)
-    if(dreadMode!=='off'&&typeof paw_state!=='undefined'&&paw_state!==3&&prox>0.16){
+    if(dreadMode!=='off'&&isAirborneDescending(0.16,40)){
      const footW=(paw&&paw.width?paw.width:96);
      const rw=Math.max(footW*0.55,footW*(1.28-0.52*prox));
      const halfW=rw*0.5,rh=Math.max(7,rw*0.15),br=Math.max(5,rw*0.14);
@@ -575,7 +582,7 @@
    }
 
    // 1c. Radial edge dread vignette inside canvas
-   if(lastDreadLevel>0.08&&!isLowEffects()){
+   if(lastDreadLevel>0.08&&!isLowEffects()&&!isReducedMotion()){
     const r0=Math.min(w,h)*0.28,r1=Math.max(w,h)*0.72;
     const vg=occ.createRadialGradient(w*0.5,h*0.54,r0,w*0.5,h*0.54,r1);
     vg.addColorStop(0,'rgba(4,9,15,0)');

@@ -47,6 +47,7 @@
 
  let mode=readMode();
  let lastDread=0;
+ let lastRawDread=0;
  let lastPressure=0;
  let lastSilence=false;
  let lastBurst=false;
@@ -152,6 +153,9 @@
 }
 :root[data-td-dread-mode="soft"] #tdv1Overlay .td-scanlines{opacity:.22}
 :root[data-td-dread-mode="soft"] #tdv1Overlay .td-corners i{border-color:rgba(72,229,255,.20)}
+:root[data-td-dread-mode="soft"] #tdv1Overlay.td-alert .td-vignette{box-shadow:inset 0 0 calc(14px + var(--td-dread) * 14px) rgba(255,77,90,.12)}
+:root[data-td-dread-mode="soft"] #tdv1Overlay.td-alert .td-corners i{border-color:rgba(255,77,90,.36)}
+:root[data-td-dread-mode="soft"] #tdv1Overlay.td-alert #tdv1Telemetry{border-color:rgba(255,77,90,.40);color:#f3a8b0}
 :root[data-td-dread-mode="off"] #tdv1Overlay,
 #play[hidden] #tdv1Overlay,
 #play.in-cinematic #tdv1Overlay,
@@ -161,6 +165,8 @@
 #play.observing #tdv1Telemetry{display:none!important}
 #tdv1Overlay.td-lowfx .td-scanlines,
 #tdv1Overlay.td-lowfx .td-vignette{display:none!important}
+#tdv1Overlay.td-rm .td-vignette{box-shadow:none!important;transition:none!important}
+#tdv1Overlay.td-rm .td-corners i{transition:none!important}
 @media(orientation:portrait){
  #tdv1Telemetry{
   left:var(--v56-safe-l,10px);
@@ -256,12 +262,14 @@
   if(modeBtn)modeBtn.textContent='压迫氛围：'+MODE_LABELS[mode];
   if(overlay){
    const prefs=readHostPrefs();
+   const effDread=prefs.reduceMotion?0:lastDread;
    if(overlay.style&&typeof overlay.style.setProperty==='function'){
-    overlay.style.setProperty('--td-dread',lastDread.toFixed(3));
+    overlay.style.setProperty('--td-dread',effDread.toFixed(3));
    }
    if(overlay.classList){
     overlay.classList.toggle('td-lowfx',!!prefs.lowEffects);
-    overlay.classList.toggle('td-alert',mode!=='off'&&lastDread>=0.68);
+    overlay.classList.toggle('td-rm',!!prefs.reduceMotion);
+    overlay.classList.toggle('td-alert',mode!=='off'&&lastRawDread>=0.68);
    }
   }
  }
@@ -278,7 +286,7 @@
   if(VALID_MODES.indexOf(next)<0)return mode;
   mode=next;
   writeMode(mode);
-  if(mode==='off')lastDread=0;
+  if(mode==='off'){lastDread=0;lastRawDread=0;}
   syncDomAppearance();
   broadcastMode();
   return mode;
@@ -349,13 +357,13 @@
  function tickTelemetry(){
   ensureUiMounted();
   if(!overlay||mode==='off'){
-   lastDread=0;
+   lastDread=0;lastRawDread=0;
    syncDomAppearance();
    return;
   }
   const snap=(window.CunjieRealms&&typeof window.CunjieRealms.snapshot==='function')?window.CunjieRealms.snapshot():null;
   if(!snap||snap.status!=='playing'){
-   lastDread=0;lastPressure=0;lastSilence=false;lastBurst=false;
+   lastDread=0;lastRawDread=0;lastPressure=0;lastSilence=false;lastBurst=false;
    syncDomAppearance();
    if(telemetryEl)telemetryEl.textContent='REC ● SECTOR-01 · SCALE 30.0m · LOAD 000 kPa · STANDBY';
    return;
@@ -365,6 +373,7 @@
   const silence=!!(snap.mood&&snap.mood.special==='silence');
   const burst=(Number(snap.mood&&snap.mood.burstRemaining)||0)>0;
   const rawDread=clamp(p*0.58+moodVal*0.28+(silence?0.25:0)+(burst?0.22:0),0,1);
+  lastRawDread=rawDread;
   lastDread=mode==='soft'?rawDread*0.52:rawDread;
 
   const spiked=(p>=0.85&&lastPressure<0.85)||(silence&&!lastSilence)||(burst&&!lastBurst);
@@ -378,7 +387,7 @@
 
   const sector=Math.max(1,Math.min(4,(Number(snap.stage)||0)+1));
   const kpa=String(Math.round(p*240)).padStart(3,'0');
-  const status=burst?'OVERDRIVE':(silence?'SIGNAL VOID':(lastDread>=0.68?'HIGH LOAD':'OBSERVING'));
+  const status=burst?'OVERDRIVE':(silence?'SIGNAL VOID':(rawDread>=0.68?'HIGH LOAD':'OBSERVING'));
   if(telemetryEl){
    telemetryEl.textContent='REC ● SECTOR-0'+sector+' · SCALE 30.0m · LOAD '+kpa+' kPa · '+status;
   }
@@ -411,6 +420,6 @@
   cycleMode,
   tick:tickTelemetry,
   destroy:()=>{if(intervalId)clearInterval(intervalId);},
-  snapshot:()=>({mode,dread:Number(lastDread.toFixed(3)),telemetry:telemetryEl?telemetryEl.textContent:''})
+  snapshot:()=>({mode,dread:Number(lastDread.toFixed(3)),rawDread:Number(lastRawDread.toFixed(3)),telemetry:telemetryEl?telemetryEl.textContent:''})
  };
 })();

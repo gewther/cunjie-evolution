@@ -20,6 +20,11 @@ function testFilesAndPaths() {
  assert(idxHtml.includes('src="scripts/tech-dread-v1.js"'), 'index.html missing scripts/tech-dread-v1.js');
  assert(!/(?<![.])\/assets\//.test(idxHtml), 'Found forbidden root-absolute /assets/ path in index.html');
 
+ for (const bundle of ['touch-v1-free.js', 'touch-v1-impact.js']) {
+  const bTxt = fs.readFileSync(path.join(releaseGame, 'data', bundle), 'utf8');
+  assert(!bTxt.includes('\\r\\n'), `Found non-normalized \\r\\n in ${bundle}`);
+ }
+
  const offlinePath = path.join(root, 'dist', 'cunjie-offline.html');
  if (fs.existsSync(offlinePath)) {
   const off = fs.readFileSync(offlinePath, 'utf8');
@@ -168,8 +173,18 @@ function testHostTerminalBehavior() {
 
  assert.equal(api.cycleMode(), 'soft');
  assert.equal(store.get('cunjie-tech-dread-v1'), 'soft');
+ snap = { status: 'playing', stage: 2, live: { pressure: 0.9 }, mood: { value: 75, special: '', burstRemaining: 0 } };
  api.tick();
- assert(api.snapshot().dread < s1.dread, 'Soft mode should attenuate dread');
+ assert(api.snapshot().dread < s1.dread, 'Soft mode should attenuate visual dread');
+ assert(api.snapshot().rawDread >= 0.68, 'Soft mode should keep rawDread high');
+ assert(api.snapshot().telemetry.includes('HIGH LOAD'), `Soft mode must still report HIGH LOAD, got: ${api.snapshot().telemetry}`);
+ assert.equal(created.get('tdv1Overlay').classList.contains('td-alert'), true);
+
+ // reduceMotion must freeze HUD --td-dread vignette and apply td-rm
+ store.set('cunjie-stomp-impact-v1', JSON.stringify({ version: 2, prefs: { sound: true, volume: 0.5, reduceMotion: true, lowEffects: false } }));
+ api.tick();
+ assert.equal(created.get('tdv1Overlay').classList.contains('td-rm'), true);
+ assert.equal(created.get('tdv1Overlay').style.getPropertyValue('--td-dread'), '0.000');
 
  assert.equal(api.cycleMode(), 'off');
  assert.equal(store.get('cunjie-tech-dread-v1'), 'off');
@@ -185,7 +200,8 @@ function testImmersionDreadCues() {
  const code = fs.readFileSync(path.join(root, 'src', 'immersion-v1.js'), 'utf8');
  const occCalls = [];
  const masterGains = [];
- const droneGains = [];
+ const gains = [];
+ const droneFreqs = [];
  const msgListeners = [];
  const sandbox = {
   Math, Number, Array, Object, Set, Map, Date, JSON,
@@ -225,11 +241,11 @@ function testImmersionDreadCues() {
    createBiquadFilter: () => ({ type: '', frequency: { setValueAtTime: () => {}, setTargetAtTime: () => {} }, Q: { setValueAtTime: () => {}, setTargetAtTime: () => {} }, connect: () => {}, disconnect: () => {} }),
    createGain: () => {
     const obj = { values: [], gain: { setValueAtTime: v => obj.values.push(v), setTargetAtTime: v => { obj.values.push(v); } }, connect: () => {}, disconnect: () => {} };
+    gains.push(obj);
     if (masterGains.length === 0) masterGains.push(obj);
-    else droneGains.push(obj);
     return obj;
    },
-   createOscillator: () => ({ type: '', frequency: { setValueAtTime: () => {}, setTargetAtTime: () => {} }, connect: () => {}, start: () => {} }),
+   createOscillator: () => ({ type: '', frequency: { setValueAtTime: v => droneFreqs.push(v), setTargetAtTime: v => droneFreqs.push(v) }, connect: () => {}, start: () => {} }),
   },
   main_volume_node: {},
   window: {
@@ -243,11 +259,45 @@ function testImmersionDreadCues() {
 
  sandbox.update_paw();
  sandbox.draw();
- assert(occCalls.some(c => c[0] === 'text' && String(c[1]).startsWith('ALT ')), 'Should draw targeting reticle altitude text');
+ assert(occCalls.some(c => c[0] === 'text' && String(c[1]).startsWith('ALT ')), 'Descending airborne foot should draw targeting reticle');
  assert(occCalls.some(c => c[0] === 'fillRect' && c[3] === 400 && c[4] === 240), 'Should draw canvas dread vignette');
  const lastMaster = masterGains[0].values.at(-1);
  assert(lastMaster < 0.3, `Silence vacuum should duck master ambience (${lastMaster})`);
  assert.equal(sandbox.window.__xlImmersionDebug().dreadMode, 'standard');
+
+ // Rising foot must NOT show reticle even close to floor
+ occCalls.length = 0;
+ sandbox.paw_y_velo = -220;
+ sandbox.draw();
+ assert(!occCalls.some(c => c[0] === 'text' && String(c[1]).startsWith('ALT ')), 'Rising airborne foot must NOT draw targeting reticle');
+ sandbox.paw_y_velo = 560;
+
+ // reduceMotion must disable canvas vignette and silence ambience vacuum
+ occCalls.length = 0;
+ masterGains[0].values.length = 0;
+ gains[3].values.length = 0;
+ droneFreqs.length = 0;
+ sandbox.realmMood.reduceMotion = true;
+ sandbox.update_paw();
+ sandbox.draw();
+ assert(!occCalls.some(c => c[0] === 'fillRect' && c[3] === 400 && c[4] === 240), 'reduceMotion must disable canvas dread vignette');
+ assert(masterGains[0].values.at(-1) > 0.4, 'reduceMotion must disable sudden-silence vacuum ducking');
+ assert.notEqual(droneFreqs.at(-1), 44, 'reduceMotion must disable forced 44 Hz vacuum drone');
+ sandbox.realmMood.reduceMotion = false;
+
+ // lowEffects must disable canvas vignette AND sudden-silence ambience vacuum / 44 Hz drone
+ occCalls.length = 0;
+ masterGains[0].values.length = 0;
+ gains[3].values.length = 0;
+ droneFreqs.length = 0;
+ sandbox.realmMood.lowEffects = true;
+ sandbox.update_paw();
+ sandbox.draw();
+ assert(!occCalls.some(c => c[0] === 'fillRect' && c[3] === 400 && c[4] === 240), 'lowEffects must disable canvas dread vignette');
+ assert(masterGains[0].values.at(-1) > 0.4, 'lowEffects must disable sudden-silence vacuum ducking');
+ assert.notEqual(droneFreqs.at(-1), 44, 'lowEffects must disable forced 44 Hz vacuum drone');
+ assert(gains[3].values.at(-1) < 0.02, 'lowEffects must not boost vacuum drone amplitude');
+ sandbox.realmMood.lowEffects = false;
 
  // Switch to off via postMessage
  msgListeners.forEach(fn => fn({ data: { type: 'cunjie-tech-dread-mode', mode: 'off' } }));
