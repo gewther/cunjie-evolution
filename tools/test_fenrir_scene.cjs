@@ -21,6 +21,9 @@ for (const name of names) {
  assert.match(svg, /<svg[^>]*width="2400"[^>]*height="240"[^>]*viewBox="0 0 2400 240"/);
  assert(svg.trim().endsWith('</svg>'));
 }
+const far = read(game, 'assets/fenrir/city-far.svg');
+assert(far.includes('id="tower-scale-cues"'), 'Far skyline must include cropped tower-scale facades');
+assert(far.includes('data-reference-height="30m"'), 'Tower art must document the 30 m scale cue');
 const near = read(game, 'assets/fenrir/city-near.svg');
 assert(near.includes('M0 194H2400V240H0Z'));
 assert(near.includes('M20 228h42'), 'lane markings align with the contact plane');
