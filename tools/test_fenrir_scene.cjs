@@ -223,6 +223,36 @@ async function main() {
  assert.deepEqual(calls.map(([sprite]) => sprite[0]), ['fenrirCityFarV1', 'fenrirCityMidV1', 'fenrirCityNearV1']);
  assert.deepEqual(calls.map(([sprite]) => sprite[1]), [120, 360, 1000]);
 
+ // P6.2: heavy landings transmit a short vibration through the city depth.
+ const rumble = createScene();
+ await new Promise(resolve => setImmediate(resolve));
+ rumble.api.recordLanding({kind: 'landing', x: 200, at: 1, force: 0.9});
+ rumble.draw();
+ const rumbleDraws = rumble.calls.slice(-3);
+ const [farY, midY, nearY] = rumbleDraws.map(([, , y]) => y);
+ assert(Math.abs(midY) > Math.abs(farY), 'mid buildings react more strongly than the distant skyline');
+ assert.notEqual(midY, 0, 'heavy landing must create a visible mid-layer response');
+ assert.equal(nearY, 0, 'near road must remain world-locked during building vibration');
+ assert.notEqual(rumble.status.weight.environmentRumble, 0);
+ rumble.window.__xlImmersionPrefs.reduceMotion = true;
+ rumble.draw();
+ assert.equal(rumble.status.weight.environmentRumble, 0, 'reduced motion suppresses building vibration');
+ assert.deepEqual(rumble.calls.slice(-3).map(([, , y]) => y), [0, 0, 0]);
+
+ const lowFxRumble = createScene();
+ await new Promise(resolve => setImmediate(resolve));
+ lowFxRumble.api.recordLanding({kind: 'landing', x: 200, at: 1, force: 1});
+ lowFxRumble.window.__xlImmersionPrefs.lowEffects = true;
+ lowFxRumble.draw();
+ assert.equal(lowFxRumble.status.weight.environmentRumble, 0, 'low-effects mode suppresses building vibration');
+
+ const decayRumble = createScene();
+ await new Promise(resolve => setImmediate(resolve));
+ decayRumble.api.recordLanding({kind: 'landing', x: 200, at: 1, force: 0.9});
+ decayRumble.draw();
+ for (let i = 0; i < 40; i++) decayRumble.draw();
+ assert.equal(decayRumble.status.weight.environmentRumble, 0, 'building vibration decays without a lingering offset');
+
  env.setPawX(300);
  env.draw();
  const progress = (300 - 264) / 136;
