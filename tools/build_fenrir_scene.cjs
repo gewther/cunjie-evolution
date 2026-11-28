@@ -7,10 +7,11 @@ const root = process.env.CUNJIE_ROOT ? path.resolve(process.env.CUNJIE_ROOT) : p
 const gameDir = path.join(root, process.argv.includes('--release') ? 'dist-release/game' : 'dist');
 const hostPath = path.join(gameDir, 'scripts', 'impact-host-3.js');
 const source = fs.readFileSync(path.join(root, 'src', 'fenrir-scene-v1.js'), 'utf8');
+const spatialBridge = fs.readFileSync(path.join(root, 'src', 'fenrir-spatial-fx-v1.js'), 'utf8').replace(/\r\n/g, '\n');
 const controls = fs.readFileSync(path.join(root, 'src', 'fenrir-controls.js'), 'utf8').replace(/\r\n/g, '\n');
 const bridge = fs.readFileSync(path.join(root, 'src', 'fenrir-scene-bridge.js'), 'utf8').replace(/\r\n/g, '\n');
 new vm.Script(source, {filename: 'fenrir-scene-v1.js'});
-new vm.Script(controls + bridge, {filename: 'fenrir iframe integration'});
+new vm.Script(spatialBridge + controls + bridge, {filename: 'fenrir iframe integration'});
 
 let host = fs.readFileSync(hostPath, 'utf8');
 const start = host.indexOf('function legacySource');
@@ -19,6 +20,7 @@ if (start < 0 || end < 0) throw new Error('Cannot locate legacySource in the Fen
 const tagLine = host.slice(start, end).split('\n').find(line => line.includes('const tag='));
 if (!tagLine) throw new Error('Original custom-motion flag missing');
 
+const injected = spatialBridge + controls + bridge;
 const sourceFunction = [
  "function legacySource(kind,motionAtlas='',isFenrir=false){",
  " if(kind==='free'&&motionAtlas){",
@@ -26,7 +28,7 @@ const sourceFunction = [
  "  let source=DATA.freeLegacy.includes('<head>')?DATA.freeLegacy.replace('<head>','<head>'+tag):DATA.freeLegacy;",
  "  if(isFenrir){",
  "   const anchor='ptime = performance.now();\\nmainloop();';",
- "   const bridge=" + JSON.stringify(controls + bridge) + ";",
+ "   const bridge=" + JSON.stringify(injected) + ";",
  "   if(source.split(anchor).length===2){",
  "    source=source.replace(anchor,()=>bridge+anchor);",
  "    source=source.replace('<head>','<head><script src=\"scripts/fenrir-scene-v1.js\"></script>');",
@@ -50,4 +52,4 @@ for (const name of ['city-far.svg', 'city-mid.svg', 'city-near.svg']) {
 }
 fs.writeFileSync(sceneOut, source);
 fs.writeFileSync(hostPath, host);
-console.log('Fenrir scene, layer assets and runtime bridge synchronized.');
+console.log('Fenrir scene, layer assets and spatial FX bridge synchronized.');
