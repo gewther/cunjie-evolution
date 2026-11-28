@@ -47,6 +47,13 @@ if (typeof window.__installFenrirScene === 'function' && fenrirCity) {
  sprite_scaled = fenrirScene.drawSprite;
  draw_front_paw = fenrirScene.wrapFrontFoot(draw_front_paw);
 
+ // Hold the first simulation frame under a skippable 30 m scale establishing shot.
+ if (typeof fenrirScene.showEstablishingShot === 'function') {
+  const wasPaused = pause;
+  pause = true;
+  if (!fenrirScene.showEstablishingShot(() => { pause = wasPaused; })) pause = wasPaused;
+ }
+
  const updateContact = freeContact.update;
  freeContact.update = function() {
   const event = updateContact.apply(this, arguments);

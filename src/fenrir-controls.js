@@ -100,6 +100,9 @@ function createFenrirPersona(memory = null) {
  let phase = 'manual', handoffs = 0, interruptions = 0, lastClock = 0;
  let pending = null, lastLineAt = -Infinity, nextIdleAt = 0;
  let observed = 0, lastChargeBand = false, lastOverdrive = false;
+ let hover = null, lastLanding = null, landings = [];
+ const priority = {observe:0, hover:1, sequence:2, takeover:3, return:3, interrupted:3,
+  ready:4, recovered:4, overdrive:5};
  const pools = {
   takeover: [
    '总算舍得松手了？靠边看着——这条街怎么踩才带劲，我亲自示范。',
@@ -110,6 +113,18 @@ function createFenrirPersona(memory = null) {
    '啧，才热完身就把控制权抢回去？你最好踩得比我狠点。',
    '行行行，还你就是了——不过漏跑了小老鼠，我可是会笑话你的。',
    '这就急着亲自动脚了？行啊，我在旁边看着你打算怎么收尾。'
+  ],
+  interrupted: [
+   '喂，抢得真快。行，你来挑落脚的位置，我看着。',
+   '又把我挤到旁边去了？好啊，让我看看你挑了哪块地。'
+  ],
+  hover: [
+   '在这儿悬着干嘛？连水洼都等着看你往哪儿落。',
+   '挑落脚点呢？看见路灯旁那片水没有？动静肯定好听。'
+  ],
+  sequence: [
+   '三步踩出了个节拍。呵，我还以为你只会一下下试探呢。',
+   '听见水声没？这三下倒是比刚才有点花样。'
   ],
   observe: [
    '雨越下越密，路面滑得刚好——踩下去连逃跑都打滑，真省事。',
@@ -125,21 +140,53 @@ function createFenrirPersona(memory = null) {
  };
  const cursor = Object.create(null);
  function queue(kind, clock) {
-  pending = {kind, at: clock};
+  if (!pending || clock - pending.at > 8 || priority[kind] >= priority[pending.kind]) {
+   pending = {kind, at: clock};
+  }
+ }
+ function resetContext(landing = null) {
+  hover = null;
+  lastLanding = landing;
+  landings = [];
+ }
+ function observePlayer(input, clock) {
+  if (input.landing !== lastLanding) {
+   lastLanding = input.landing;
+   if (lastLanding) {
+    landings = landings.filter(at => clock - at <= 4);
+    landings.push(clock);
+    if (landings.length === 3) {
+     queue('sequence', clock);
+     landings = [];
+    }
+   }
+  }
+  const foot = input.hoverFoot;
+  if (!foot) {
+   hover = null;
+  } else if (!hover || Math.abs(foot.x - hover.x) > 10 || Math.abs(foot.y - hover.y) > 6) {
+   hover = {x: foot.x, y: foot.y, since: clock, signaled: false};
+  } else if (!hover.signaled && clock - hover.since >= 1.4) {
+   hover.signaled = true;
+   queue('hover', clock);
+  }
  }
  function reset(clock = 0) {
   phase = 'manual'; pending = null; lastClock = clock;
   lastLineAt = -Infinity; nextIdleAt = clock + 9;
   observed = 0; lastChargeBand = false; lastOverdrive = false;
   handoffs = 0; interruptions = 0;
+  resetContext();
   for (const key of Object.keys(cursor)) delete cursor[key];
  }
- function setEnabled(enabled, clock) {
+ function setEnabled(enabled, clock, manualTakeover = false) {
   const next = enabled ? 'autonomous' : 'manual';
   if (phase === next) return;
   phase = next;
+  pending = null;
+  resetContext(lastLanding);
   if (enabled) { handoffs++; queue('takeover', clock); }
-  else { interruptions++; queue('return', clock); }
+  else { interruptions++; queue(manualTakeover ? 'interrupted' : 'return', clock); }
   nextIdleAt = clock + 9;
  }
  function update(input) {
@@ -149,7 +196,13 @@ function createFenrirPersona(memory = null) {
   const dt = Math.max(0, Math.min(0.1, clock - lastClock));
   lastClock = clock;
   setEnabled(!!input.enabled, clock);
-  if (!input.active || input.paused || input.finished) return null;
+  if (!input.active || input.paused || input.finished) {
+   resetContext(input.landing);
+   if (pending && priority[pending.kind] <= priority.sequence) pending = null;
+   return null;
+  }
+  if (phase === 'manual' && input.dialogue) observePlayer(input, clock);
+  else resetContext(input.landing);
   if (phase === 'autonomous') observed += dt;
   const charged = Number(input.charge) >= 100 && !input.overdrive;
   if (phase === 'autonomous') {
@@ -337,10 +390,10 @@ if (fenrirCity) {
  dock.appendChild(cadenceButton);
  syncCadenceButton();
 
- function setPilot(enabled) {
+ function setPilot(enabled, manualTakeover = false) {
   if (pilot?.enabled !== enabled) {
    pilot?.setEnabled(enabled, commands);
-   if (pilot) persona.setEnabled(enabled, hunt.totalClock);
+   if (pilot) persona.setEnabled(enabled, hunt.totalClock, manualTakeover && active && !pause && !tr && !hunt.finished);
    if (!enabled) cadence.factor({enabled:false});
    if (enabled && pilot) {
     realmTouchDisown();
@@ -411,6 +464,8 @@ if (fenrirCity) {
     clock: hunt.totalClock, enabled: pilot.enabled, active,
     paused: pause || tr, finished: hunt.finished,
     charge: hunt.thrill, overdrive: hunt.overdrive,
+    hoverFoot: paw_y < floor_y - 18 ? {x: paw_x, y: paw_y} : null,
+    landing: hunt.pendingStompCheck,
     dialogue: dialogueAllowed,
     busy: hunt.speakLeft > 0 || hunt.totalClock - hunt.lastSpeakAt < 2.1
    });
@@ -439,13 +494,13 @@ if (fenrirCity) {
     closeDrawerButton.click();
     if (pause && !xlRuntime.session.completed) pauseButton.click();
    }
-   setPilot(false);
+   setPilot(false, true);
    focusCanvas();
   }, {capture: true});
  }
  closeDrawerButton.addEventListener('click', focusCanvas);
  oc.addEventListener('pointerdown', () => {
-  setPilot(false);
+  setPilot(false, true);
   focusCanvas();
  });
  dock.addEventListener('click', event => {
@@ -473,7 +528,7 @@ if (fenrirCity) {
   b.dataset.act = act;
   b.textContent = label;
   const trigger = () => {
-   setPilot(false);
+   setPilot(false, true);
    if (act === 'up') document.getElementById('xl-up')?.click();
    else if (act === 'down') document.getElementById('xl-down')?.click();
    else {

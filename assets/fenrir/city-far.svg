@@ -1,16 +1,104 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="2400" height="240" viewBox="0 0 2400 240">
 <defs>
- <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#06111e"/><stop offset=".58" stop-color="#142b3c"/><stop offset="1" stop-color="#294455"/></linearGradient>
- <linearGradient id="mist" x2="0" y2="1"><stop stop-color="#9bc5d4" stop-opacity="0"/><stop offset="1" stop-color="#9bc5d4" stop-opacity=".2"/></linearGradient>
- <pattern id="win" width="13" height="15" patternUnits="userSpaceOnUse"><rect x="3" y="4" width="4" height="5" fill="#a9d2df" opacity=".24"/></pattern>
+ <linearGradient id="sky" x2="0" y2="1"><stop offset="0" stop-color="#050e19"/><stop offset=".45" stop-color="#0e2233"/><stop offset=".82" stop-color="#1c3b4c"/><stop offset="1" stop-color="#2c4e5e"/></linearGradient>
+ <radialGradient id="halo1" cx=".37" cy=".22" r=".22"><stop stop-color="#69b8cf" stop-opacity=".18"/><stop offset="1" stop-color="#69b8cf" stop-opacity="0"/></radialGradient>
+ <radialGradient id="halo2" cx=".86" cy=".20" r=".20"><stop stop-color="#7fd4e6" stop-opacity=".14"/><stop offset="1" stop-color="#7fd4e6" stop-opacity="0"/></radialGradient>
+ <linearGradient id="cloud" x2="0" y2="1"><stop stop-color="#23485c" stop-opacity=".34"/><stop offset="1" stop-color="#0a1b29" stop-opacity=".04"/></linearGradient>
+ <linearGradient id="farB" x2="0" y2="1"><stop stop-color="#0c2030"/><stop offset="1" stop-color="#081623"/></linearGradient>
+ <linearGradient id="midFarB" x2="0" y2="1"><stop stop-color="#091826"/><stop offset="1" stop-color="#06111c"/></linearGradient>
+ <linearGradient id="mist" x2="0" y2="1"><stop stop-color="#8dc6d8" stop-opacity="0"/><stop offset=".55" stop-color="#8dc6d8" stop-opacity=".14"/><stop offset="1" stop-color="#1c3d4f" stop-opacity=".42"/></linearGradient>
+ <pattern id="winCool" width="14" height="16" patternUnits="userSpaceOnUse">
+  <rect x="3" y="3" width="3.5" height="5" rx=".5" fill="#9bd8ea" opacity=".26"/>
+  <rect x="9" y="9" width="3.5" height="5" rx=".5" fill="#77bed3" opacity=".16"/>
+ </pattern>
+ <pattern id="winMix" width="22" height="20" patternUnits="userSpaceOnUse">
+  <rect x="3" y="4" width="4" height="5" rx=".5" fill="#a8dfee" opacity=".32"/>
+  <rect x="13" y="4" width="4" height="5" rx=".5" fill="#f0c783" opacity=".24"/>
+  <rect x="8" y="12" width="5" height="4" rx=".5" fill="#7dc5d8" opacity=".18"/>
+ </pattern>
+ <linearGradient id="scaleTowerGlass" x1="0" y1="0" x2="1" y2="0">
+  <stop offset="0" stop-color="#071522"/>
+  <stop offset=".42" stop-color="#122c3d"/>
+  <stop offset=".78" stop-color="#0a1d2b"/>
+  <stop offset="1" stop-color="#04101a"/>
+ </linearGradient>
+ <pattern id="scaleTowerWindows" width="30" height="30" patternUnits="userSpaceOnUse">
+  <rect x="5" y="5" width="7" height="12" rx=".7" fill="#9addec" opacity=".34"/>
+  <rect x="18" y="5" width="7" height="12" rx=".7" fill="#e9c98b" opacity=".20"/>
+  <rect x="5" y="22" width="7" height="5" rx=".5" fill="#6dc9df" opacity=".16"/>
+  <rect x="18" y="22" width="7" height="5" rx=".5" fill="#8bd9e9" opacity=".12"/>
+ </pattern>
 </defs>
 <rect width="2400" height="240" fill="url(#sky)"/>
-<circle cx="890" cy="52" r="37" fill="#8cc8dc" opacity=".07"/>
-<circle cx="2070" cy="44" r="29" fill="#8cc8dc" opacity=".055"/>
-<path d="M0 158L32 158 32 113 61 113 61 146 87 146 87 91 120 91 120 154 146 154 146 121 177 121 177 151 203 151 203 82 242 82 242 154 274 154 274 108 307 108 307 155 342 155 342 71 374 71 374 151 404 151 404 121 435 121 435 154 472 154 472 94 508 94 508 154 542 154 542 115 575 115 575 153 610 153 610 79 650 79 650 151 680 151 680 113 711 113 711 153 747 153 747 97 784 97 784 152 816 152 816 120 850 120 850 153 883 153 883 68 920 68 920 150 952 150 952 104 987 104 987 152 1020 152 1020 119 1054 119 1054 151 1088 151 1088 85 1126 85 1126 151 1155 151 1155 113 1184 113 1184 158 1200 158 1200 202 0 202Z" fill="#0b1b29"/>
-<path d="M0 158L32 158 32 113 61 113 61 146 87 146 87 91 120 91 120 154 146 154 146 121 177 121 177 151 203 151 203 82 242 82 242 154 274 154 274 108 307 108 307 155 342 155 342 71 374 71 374 151 404 151 404 121 435 121 435 154 472 154 472 94 508 94 508 154 542 154 542 115 575 115 575 153 610 153 610 79 650 79 650 151 680 151 680 113 711 113 711 153 747 153 747 97 784 97 784 152 816 152 816 120 850 120 850 153 883 153 883 68 920 68 920 150 952 150 952 104 987 104 987 152 1020 152 1020 119 1054 119 1054 151 1088 151 1088 85 1126 85 1126 151 1155 151 1155 113 1184 113 1184 158 1200 158" fill="url(#win)"/>
-<path d="M1200 165L1232 165 1232 128 1262 128 1262 151 1290 151 1290 83 1328 83 1328 154 1358 154 1358 108 1392 108 1392 153 1425 153 1425 62 1468 62 1468 151 1501 151 1501 118 1534 118 1534 153 1568 153 1568 95 1605 95 1605 151 1640 151 1640 70 1678 70 1678 150 1712 150 1712 109 1746 109 1746 152 1782 152 1782 88 1819 88 1819 153 1854 153 1854 120 1888 120 1888 153 1922 153 1922 76 1964 76 1964 151 1998 151 1998 108 2030 108 2030 153 2066 153 2066 91 2104 91 2104 152 2138 152 2138 119 2172 119 2172 153 2206 153 2206 65 2248 65 2248 151 2280 151 2280 110 2314 110 2314 153 2348 153 2348 89 2385 89 2385 158 2400 158V202H1200Z" fill="#0b1b29"/>
-<path d="M1200 165L1232 165 1232 128 1262 128 1262 151 1290 151 1290 83 1328 83 1328 154 1358 154 1358 108 1392 108 1392 153 1425 153 1425 62 1468 62 1468 151 1501 151 1501 118 1534 118 1534 153 1568 153 1568 95 1605 95 1605 151 1640 151 1640 70 1678 70 1678 150 1712 150 1712 109 1746 109 1746 152 1782 152 1782 88 1819 88 1819 153 1854 153 1854 120 1888 120 1888 153 1922 153 1922 76 1964 76 1964 151 1998 151 1998 108 2030 108 2030 153 2066 153 2066 91 2104 91 2104 152 2138 152 2138 119 2172 119 2172 153 2206 153 2206 65 2248 65 2248 151 2280 151 2280 110 2314 110 2314 153 2348 153 2348 89 2385 89 2385 158 2400 158" fill="url(#win)"/>
-<path d="M0 171Q210 150 390 168T760 165T1200 170T1640 164T2040 169T2400 166V240H0Z" fill="url(#mist)"/>
-<g fill="#5f8193" opacity=".18"><path d="M140 82h2v67h-2zM345 70h2v81h-2zM612 78h2v75h-2zM886 67h2v83h-2zM1090 84h2v67h-2zM1450 61h2v90h-2zM1680 70h2v80h-2zM1960 75h2v76h-2zM2240 64h2v87h-2z"/></g>
+<rect width="2400" height="240" fill="url(#halo1)"/>
+<rect width="2400" height="240" fill="url(#halo2)"/>
+<!-- High rain cloud ridges -->
+<path d="M0 36Q140 16 290 34T620 26T950 38T1290 24T1640 37T1980 25T2400 35V92H0Z" fill="url(#cloud)"/>
+<path d="M0 64Q180 48 360 62T760 56T1150 66T1580 54T1990 65T2400 59V118H0Z" fill="url(#cloud)" opacity=".7"/>
+<!-- Tower-scale facades deliberately leave the top of frame: the city continues above this 15 m ground-level crop. -->
+<g id="tower-scale-cues" data-reference-height="30m" opacity=".62">
+ <g>
+  <path d="M-36 -180H250L350 171H-36Z" fill="url(#scaleTowerGlass)" stroke="#6e9fb1" stroke-opacity=".30"/>
+  <path d="M-36 -180H250L350 171H-36Z" fill="url(#scaleTowerWindows)" opacity=".76"/>
+  <path d="M250 -180L350 171H316L218 -180Z" fill="#04111c" opacity=".66"/>
+  <path d="M12 -180L106 171M78 -180L172 171M144 -180L238 171" stroke="#8ac5d5" stroke-opacity=".17" stroke-width="2"/>
+  <path d="M-36 -70H282M-36 38H313M-36 132H339" stroke="#8ac5d5" stroke-opacity=".13"/>
+  <path d="M-12 -180L82 171" stroke="#6de1f3" stroke-opacity=".40" stroke-width="2"/>
+  <path d="M-28 14h8m-8 6h8m-8 6h8" stroke="#f0c47a" stroke-opacity=".56" stroke-width="2"/>
+ </g>
+ <g>
+  <path d="M478 -220H716L808 169H478Z" fill="url(#scaleTowerGlass)" stroke="#6e9fb1" stroke-opacity=".28"/>
+  <path d="M478 -220H716L808 169H478Z" fill="url(#scaleTowerWindows)" opacity=".68"/>
+  <path d="M716 -220L808 169H774L680 -220Z" fill="#04111c" opacity=".72"/>
+  <path d="M518 -220L590 169M580 -220L652 169M642 -220L714 169" stroke="#8ac5d5" stroke-opacity=".15" stroke-width="2"/>
+  <path d="M478 -90H748M478 20H775M478 126H798" stroke="#8ac5d5" stroke-opacity=".12"/>
+  <path d="M700 -220L790 150" stroke="#6de1f3" stroke-opacity=".34" stroke-width="2"/>
+  <circle cx="696" cy="8" r="2.2" fill="#f06a67" opacity=".78"/>
+ </g>
+ <g>
+  <path d="M946 -250H1194L1280 170H946Z" fill="url(#scaleTowerGlass)" stroke="#6e9fb1" stroke-opacity=".28"/>
+  <path d="M946 -250H1194L1280 170H946Z" fill="url(#scaleTowerWindows)" opacity=".72"/>
+  <path d="M1194 -250L1280 170H1244L1158 -250Z" fill="#04111c" opacity=".72"/>
+  <path d="M984 -250L1058 170M1050 -250L1124 170M1116 -250L1190 170" stroke="#8ac5d5" stroke-opacity=".16" stroke-width="2"/>
+  <path d="M946 -120H1220M946 -12H1242M946 102H1266" stroke="#8ac5d5" stroke-opacity=".13"/>
+  <path d="M1178 -250L1264 152" stroke="#6de1f3" stroke-opacity=".36" stroke-width="2"/>
+  <circle cx="1177" cy="11" r="2.3" fill="#f06a67" opacity=".82"/>
+ </g>
+ <g>
+  <path d="M1480 -205H1724L1820 170H1480Z" fill="url(#scaleTowerGlass)" stroke="#6e9fb1" stroke-opacity=".28"/>
+  <path d="M1480 -205H1724L1820 170H1480Z" fill="url(#scaleTowerWindows)" opacity=".70"/>
+  <path d="M1724 -205L1820 170H1784L1688 -205Z" fill="#04111c" opacity=".70"/>
+  <path d="M1520 -205L1592 170M1584 -205L1656 170M1648 -205L1720 170" stroke="#8ac5d5" stroke-opacity=".15" stroke-width="2"/>
+  <path d="M1480 -80H1756M1480 28H1782M1480 130H1808" stroke="#8ac5d5" stroke-opacity=".12"/>
+  <path d="M1708 -205L1802 152" stroke="#6de1f3" stroke-opacity=".34" stroke-width="2"/>
+  <circle cx="1706" cy="9" r="2.2" fill="#f06a67" opacity=".80"/>
+ </g>
+ <g>
+  <path d="M1988 -220H2300L2400 170H1988Z" fill="url(#scaleTowerGlass)" stroke="#6e9fb1" stroke-opacity=".28"/>
+  <path d="M1988 -220H2300L2400 170H1988Z" fill="url(#scaleTowerWindows)" opacity=".72"/>
+  <path d="M2300 -220L2400 170H2364L2262 -220Z" fill="#04111c" opacity=".72"/>
+  <path d="M2030 -220L2106 170M2098 -220L2174 170M2166 -220L2242 170" stroke="#8ac5d5" stroke-opacity=".15" stroke-width="2"/>
+  <path d="M1988 -92H2330M1988 20H2358M1988 126H2386" stroke="#8ac5d5" stroke-opacity=".12"/>
+  <path d="M2284 -220L2380 152" stroke="#6de1f3" stroke-opacity=".34" stroke-width="2"/>
+  <circle cx="2280" cy="10" r="2.2" fill="#f06a67" opacity=".80"/>
+ </g>
+</g>
+<!-- Distant hazy backdrop spires -->
+<path d="M0 164V102H48V122H92V78H136V128H190V64H250V132H305V52H366V118H418V92H468V130H530V69H595V120H642V82H698V126H760V58H832V122H880V94H938V132H1000V68H1065V124H1120V88H1172V164ZM1200 164V94H1254V126H1312V62H1380V128H1438V48H1504V122H1558V86H1618V128H1684V62H1748V122H1802V90H1866V132H1928V54H1996V124H2054V82H2112V128H2176V52H2244V122H2300V88H2356V124H2400V164Z" fill="#0e2638" opacity=".62"/>
+<!-- Far district silhouette A + B -->
+<path d="M0 158L32 158 32 113 61 113 61 146 87 146 87 91 120 91 120 154 146 154 146 121 177 121 177 151 203 151 203 82 242 82 242 154 274 154 274 108 307 108 307 155 342 155 342 66 378 66 378 151 404 151 404 121 435 121 435 154 472 154 472 94 508 94 508 154 542 154 542 115 575 115 575 153 610 153 610 74 654 74 654 151 680 151 680 113 711 113 711 153 747 153 747 97 784 97 784 152 816 152 816 120 850 120 850 153 883 153 883 62 924 62 924 150 952 150 952 104 987 104 987 152 1020 152 1020 119 1054 119 1054 151 1088 151 1088 85 1126 85 1126 151 1155 151 1155 113 1184 113 1184 158 1200 158V202H0Z" fill="url(#midFarB)"/>
+<path d="M0 158L32 158 32 113 61 113 61 146 87 146 87 91 120 91 120 154 146 154 146 121 177 121 177 151 203 151 203 82 242 82 242 154 274 154 274 108 307 108 307 155 342 155 342 66 378 66 378 151 404 151 404 121 435 121 435 154 472 154 472 94 508 94 508 154 542 154 542 115 575 115 575 153 610 153 610 74 654 74 654 151 680 151 680 113 711 113 711 153 747 153 747 97 784 97 784 152 816 152 816 120 850 120 850 153 883 153 883 62 924 62 924 150 952 150 952 104 987 104 987 152 1020 152 1020 119 1054 119 1054 151 1088 151 1088 85 1126 85 1126 151 1155 151 1155 113 1184 113 1184 158 1200 158" fill="url(#winCool)"/>
+<path d="M1200 165L1232 165 1232 128 1262 128 1262 151 1290 151 1290 83 1328 83 1328 154 1358 154 1358 108 1392 108 1392 153 1425 153 1425 56 1472 56 1472 151 1501 151 1501 118 1534 118 1534 153 1568 153 1568 95 1605 95 1605 151 1640 151 1640 66 1682 66 1682 150 1712 150 1712 109 1746 109 1746 152 1782 152 1782 88 1819 88 1819 153 1854 153 1854 120 1888 120 1888 153 1922 153 1922 72 1966 72 1966 151 1998 151 1998 108 2030 108 2030 153 2066 153 2066 91 2104 91 2104 152 2138 152 2138 119 2172 119 2172 153 2206 153 2206 58 2252 58 2252 151 2280 151 2280 110 2314 110 2314 153 2348 153 2348 89 2385 89 2385 158 2400 158V202H1200Z" fill="url(#farB)"/>
+<path d="M1200 165L1232 165 1232 128 1262 128 1262 151 1290 151 1290 83 1328 83 1328 154 1358 154 1358 108 1392 108 1392 153 1425 153 1425 56 1472 56 1472 151 1501 151 1501 118 1534 118 1534 153 1568 153 1568 95 1605 95 1605 151 1640 151 1640 66 1682 66 1682 150 1712 150 1712 109 1746 109 1746 152 1782 152 1782 88 1819 88 1819 153 1854 153 1854 120 1888 120 1888 153 1922 153 1922 72 1966 72 1966 151 1998 151 1998 108 2030 108 2030 153 2066 153 2066 91 2104 91 2104 152 2138 152 2138 119 2172 119 2172 153 2206 153 2206 58 2252 58 2252 151 2280 151 2280 110 2314 110 2314 153 2348 153 2348 89 2385 89 2385 158 2400 158" fill="url(#winMix)"/>
+<!-- Rooftop crown trims & illuminated penthouse strips -->
+<g fill="#5cb8d1" opacity=".28">
+ <rect x="205" y="80" width="35" height="2"/><rect x="344" y="64" width="32" height="2"/><rect x="612" y="72" width="40" height="2"/><rect x="885" y="60" width="37" height="2"/>
+ <rect x="1427" y="54" width="43" height="2"/><rect x="1642" y="64" width="38" height="2"/><rect x="1924" y="70" width="40" height="2"/><rect x="2208" y="56" width="42" height="2"/>
+</g>
+<!-- Spires & warning beacons -->
+<g fill="#648d9e" opacity=".32"><path d="M222 65h1.5v17h-1.5zM360 44h2v22h-2zM632 52h1.5v22h-1.5zM904 38h2v24h-2zM1448 34h2v22h-2zM1660 44h1.5v22h-1.5zM1945 50h1.5v22h-1.5zM2229 36h2v22h-2z"/></g>
+<g fill="#f06464" opacity=".68"><circle cx="361" cy="44" r="1.4"/><circle cx="905" cy="38" r="1.5"/><circle cx="1449" cy="34" r="1.5"/><circle cx="2230" cy="36" r="1.4"/></g>
+<g fill="#6de0f2" opacity=".45"><circle cx="632.7" cy="52" r="1.2"/><circle cx="1660.7" cy="44" r="1.2"/></g>
+<!-- Far misty atmospheric band -->
+<path d="M0 166Q210 146 390 164T760 160T1200 167T1640 160T2040 166T2400 162V240H0Z" fill="url(#mist)"/>
 </svg>

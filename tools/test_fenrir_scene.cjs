@@ -11,6 +11,7 @@ const host = read(game, 'scripts/impact-host-3.js');
 const scene = read(game, 'scripts/fenrir-scene-v1.js');
 const controls = read(root, 'src/fenrir-controls.js').replace(/\r\n/g, '\n');
 const bridge = read(root, 'src/fenrir-scene-bridge.js').replace(/\r\n/g, '\n');
+const presentation = read(root, 'src/fenrir-presentation.js').replace(/\r\n/g, '\n');
 assert.equal(scene, read(root, 'src/fenrir-scene-v1.js'));
 
 const names = ['far', 'mid', 'near'];
@@ -21,6 +22,9 @@ for (const name of names) {
  assert.match(svg, /<svg[^>]*width="2400"[^>]*height="240"[^>]*viewBox="0 0 2400 240"/);
  assert(svg.trim().endsWith('</svg>'));
 }
+const far = read(game, 'assets/fenrir/city-far.svg');
+assert(far.includes('id="tower-scale-cues"'), 'Far skyline must include cropped tower-scale facades');
+assert(far.includes('data-reference-height="30m"'), 'Tower art must document the 30 m scale cue');
 const near = read(game, 'assets/fenrir/city-near.svg');
 assert(near.includes('M0 194H2400V240H0Z'));
 assert(near.includes('M20 228h42'), 'lane markings align with the contact plane');
@@ -39,13 +43,55 @@ vm.runInNewContext(fn, placement);
 const rendered = placement.legacySource('free', 'motion.png', true);
 assert(rendered.includes('<base href="https://example.test/cunjie-evolution/">'));
 assert(rendered.includes('<script src="scripts/fenrir-scene-v1.js"></script>'));
-assert(rendered.includes(controls + bridge + anchor));
+assert(rendered.includes(controls + bridge + presentation + anchor));
 for (const script of rendered.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/gi)) new vm.Script(script[1]);
 assert(!placement.legacySource('free', 'custom.png', false).includes(bridge));
 assert(!placement.legacySource('free', 'custom.png', false).includes(controls));
+assert(!placement.legacySource('free', 'custom.png', false).includes(presentation));
 assert(!placement.legacySource('free', 'custom.png', false).includes('scripts/fenrir-scene-v1.js'));
 
-function createScene({textureLimit = 4096, failMid = false} = {}) {
+const renderQuality = read(game, 'scripts/render-quality.js');
+assert.equal(renderQuality, read(root, 'src/render-quality.js').replace(/\r\n/g, '\n'));
+const qualityContext = {};
+vm.runInNewContext(renderQuality, qualityContext);
+const qualityApi = qualityContext.CunjieRenderQuality;
+function qualityFixture({coarse = true, webgl = true, width = 800} = {}) {
+ const view = {
+  devicePixelRatio: 3,
+  matchMedia: () => ({matches: coarse}),
+  addEventListener() {}
+ };
+ const scene = {width: 400, height: 240};
+ const display = {clientWidth: width, ownerDocument: {defaultView: view}, dataset: {}, style: {}};
+ const profile = qualityApi.create(scene, display, webgl ? {viewport() {}} : null, 400, 240, false);
+ return {scene, display, profile};
+}
+const storyQuality = qualityFixture();
+const fenrirQuality = qualityFixture();
+fenrirQuality.profile.setFenrirMode('auto');
+storyQuality.profile.frame(0);
+fenrirQuality.profile.frame(0);
+assert.equal(storyQuality.scene.height, 1080, 'story still follows the host setting');
+assert.equal(fenrirQuality.scene.height, 720, 'mobile landscape starts at or below 720p');
+for (let t = 50; t <= 2500; t += 50) fenrirQuality.profile.frame(t);
+assert.equal(fenrirQuality.scene.height, 540, 'sustained low frame rate reduces resolution');
+fenrirQuality.profile.setFenrirMode('hd');
+fenrirQuality.profile.frame(2600);
+assert.equal(fenrirQuality.scene.height, 1080, 'manual HD overrides mobile adaptation');
+qualityApi.setMode('qhd');
+storyQuality.profile.frame(2600);
+assert.equal(storyQuality.scene.height, 1440);
+assert.equal(fenrirQuality.scene.height, 1080);
+const canvasQuality = qualityFixture({webgl: false});
+canvasQuality.profile.setFenrirMode('auto');
+canvasQuality.profile.frame(0);
+assert.equal(canvasQuality.scene.height, 480, 'Canvas fallback has a smaller starting budget');
+const portraitQuality = qualityFixture({width: 390});
+portraitQuality.profile.setFenrirMode('auto');
+portraitQuality.profile.frame(0);
+assert.equal(portraitQuality.scene.height, 360);
+
+function createScene({textureLimit = 4096, failMid = false, document: documentOverride = null, windowOverrides = {}} = {}) {
  let tick = 1000;
  const original = ['fenrirCity', 0, 0, 400, 240];
  const textures = new Map();
@@ -55,9 +101,11 @@ function createScene({textureLimit = 4096, failMid = false} = {}) {
   frameHeight: 256, texture: 'giant', soleOffset: 2, contactCenter: 0.54,
   force: 0.8, age: 0, pressure: 0.9
  };
- const window = {__xlImmersionPrefs: {}};
+ const window = {__xlImmersionPrefs: {}, ...windowOverrides};
+ const document = documentOverride || {baseURI: 'https://example.test/cunjie-evolution/'};
+ window.document = document;
  const sandbox = {
-  window, URL, document: {baseURI: 'https://example.test/cunjie-evolution/'},
+  window, URL, document,
   performance: {now: () => tick += 16},
   console: {warn: (...args) => warnings.push(args)},
   Image: class {
@@ -108,6 +156,52 @@ function testPersona() {
  assert.equal(step(0.1, {enabled: false}), null);
  assert.equal(p.status().handoffs, 0);
  assert.equal(p.status().interruptions, 0);
+}
+function testContextualDialogue() {
+ const sandbox = {fenrirCity: false};
+ vm.runInNewContext(controls, sandbox);
+ const p = sandbox.createFenrirPersona();
+ const input = {enabled:false, active:true, paused:false, finished:false,
+  charge:18, overdrive:false, dialogue:true, busy:false, landing:null, hoverFoot:null};
+ const step = (clock, overrides) => p.update({...input, clock, ...overrides});
+ const hoverFoot = {x:140, y:150};
+ assert.equal(step(0, {hoverFoot}), null);
+ assert.equal(step(1, {hoverFoot:{x:155, y:150}}), null, 'movement restarts the hover timer');
+ assert.equal(step(1.5, {hoverFoot}), null);
+ assert.equal(step(2.5, {hoverFoot}), null);
+ const firstHover = step(3, {hoverFoot});
+ assert.equal(firstHover.kind, 'hover');
+ assert.equal(step(8.1, {hoverFoot}), null, 'same hover plays once');
+ step(9);
+ step(10, {hoverFoot});
+ const nextHover = step(11.5, {hoverFoot});
+ assert.equal(nextHover.kind, 'hover');
+ assert.notEqual(nextHover.text, firstHover.text, 'the next hover rotates the line');
+
+ const landing = {};
+ assert.equal(step(20, {landing}), null);
+ assert.equal(step(20.1, {landing}), null, 'repeated frames count as one landing');
+ assert.equal(step(21, {landing:{}}), null);
+ assert.equal(step(22, {landing:{}, busy:true}), null);
+ assert.equal(step(22.1).kind, 'sequence', 'gameplay speech delays the combo line');
+ step(30, {landing:{}});
+ step(35, {landing:{}});
+ assert.equal(step(36, {landing:{}}), null, 'old landings cannot complete a combo');
+ assert.equal(step(37, {landing:{}, paused:true}), null);
+ assert.equal(step(38, {landing:{}}), null, 'a pause clears the combo');
+ step(40, {hoverFoot, dialogue:false});
+ assert.equal(step(42, {hoverFoot}), null, 'muted play does not charge up a hover');
+
+ assert.equal(step(44, {enabled:true}).kind, 'takeover');
+ p.setEnabled(false, 45, true);
+ assert.equal(step(45, {busy:true}), null);
+ assert.equal(step(49).kind, 'interrupted');
+ assert.equal(p.status().interruptions, 1);
+ step(50, {hoverFoot});
+ assert.equal(step(52, {hoverFoot, busy:true}), null);
+ p.setEnabled(true, 53);
+ assert.equal(step(54, {enabled:true}).kind, 'takeover', 'new control phase supersedes queued banter');
+ assert.equal(step(0.1, {hoverFoot}), null, 'a restarted run clears contextual state');
 }
 function testMemory() {
  const sandbox = {fenrirCity: false};
@@ -205,8 +299,87 @@ function testCadence() {
  }
  assert(simulate('deliberate') > simulate('classic'));
 }
+
+function makeIntroDom({portrait = false, lowEffects = false} = {}) {
+ const timers = [];
+ const skipListeners = {};
+ const group = () => ({attrs:{},setAttribute(name,value){this.attrs[name]=value;}});
+ const wide = group(), tall = group();
+ const svg = {
+  attrs:{},
+  setAttribute(name,value){this.attrs[name]=value;},
+  querySelector(selector){return selector === '.wide' ? wide : selector === '.tall' ? tall : null;}
+ };
+ const skip = {
+  addEventListener(type,fn){skipListeners[type]=fn;},
+  focus(){},
+  click(){if(skipListeners.click)skipListeners.click({preventDefault(){},stopPropagation(){}});}
+ };
+ const overlay = {
+  className:'', innerHTML:'', removed:false, attrs:{}, style:{cssText:''},
+  classList:{toggle(name,value){overlay.attrs[name]=value;}},
+  setAttribute(name,value){this.attrs[name]=value;},
+  querySelector(selector){return selector === '.fenrir-establishing__svg' ? svg : selector === '.fenrir-establishing__skip' ? skip : null;},
+  remove(){this.removed=true;}
+ };
+ const document = {
+  baseURI:'https://example.test/cunjie-evolution/',
+  documentElement:{clientWidth:portrait?390:1280,clientHeight:portrait?844:720},
+  body:{child:null,appendChild(el){this.child=el;el.parentNode=this;}},
+  createElement(){return overlay;},
+  addEventListener(){},
+  removeEventListener(){}
+ };
+ const windowOverrides = {
+  __xlImmersionPrefs:{lowEffects},
+  innerWidth:portrait?390:1280,
+  innerHeight:portrait?844:720,
+  setTimeout(fn,ms){timers.push({fn,ms,cleared:false});return timers.length;},
+  clearTimeout(id){if(timers[id-1])timers[id-1].cleared=true;},
+  addEventListener(){},
+  removeEventListener(){}
+ };
+ return {document,windowOverrides,timers,overlay,skip,svg,wide,tall};
+}
+function testEstablishingShot() {
+ const wideDom = makeIntroDom();
+ const wideScene = createScene({document:wideDom.document,windowOverrides:wideDom.windowOverrides});
+ let completed = 0;
+ assert.equal(wideScene.api.showEstablishingShot(() => completed++), true);
+ assert.equal(wideDom.document.body.child, wideDom.overlay);
+ assert.match(wideDom.overlay.innerHTML,/data-reference-height="30m"/);
+ assert(wideDom.overlay.innerHTML.includes('30.0 m MECHA'));
+ assert(wideDom.overlay.innerHTML.includes('6.0 m STREETLIGHT'));
+ assert(wideDom.overlay.innerHTML.includes('4.5 m VEHICLE'));
+ assert.match(wideDom.overlay.innerHTML,/18\.0m \/ BLOCK/);
+ assert.match(wideDom.overlay.innerHTML,/fenrir-establishing__skip/);
+ assert.equal(wideDom.svg.attrs.viewBox,'0 0 1600 900');
+ assert.equal(wideDom.timers[0].ms,5200);
+ wideDom.skip.click();
+ wideDom.skip.click();
+ assert.equal(wideDom.overlay.removed,true);
+ assert.equal(completed,1,'skip and timer completion are idempotent');
+ assert.equal(wideDom.timers[0].cleared,true);
+
+ const tallDom = makeIntroDom({portrait:true,lowEffects:true});
+ const tallScene = createScene({document:tallDom.document,windowOverrides:tallDom.windowOverrides});
+ let tallCompleted = 0;
+ assert.equal(tallScene.api.showEstablishingShot(() => tallCompleted++),true);
+ assert.equal(tallDom.svg.attrs.viewBox,'0 0 900 1600');
+ assert.equal(tallDom.overlay.attrs['is-portrait'],true);
+ assert.equal(tallDom.timers[0].ms,3000);
+ assert.match(tallDom.overlay.innerHTML,/lowfx/);
+ tallDom.skip.click();
+ assert.equal(tallCompleted,1);
+
+ const fallback = createScene();
+ assert.equal(fallback.api.showEstablishingShot(()=>{}),false,'missing DOM must leave the game playable');
+}
+
 async function main() {
  testPersona();
+ testEstablishingShot();
+ testContextualDialogue();
  testMemory();
  testCadence();
  const env = createScene();
@@ -222,6 +395,36 @@ async function main() {
  assert.equal(status.cameraX, 1000);
  assert.deepEqual(calls.map(([sprite]) => sprite[0]), ['fenrirCityFarV1', 'fenrirCityMidV1', 'fenrirCityNearV1']);
  assert.deepEqual(calls.map(([sprite]) => sprite[1]), [120, 360, 1000]);
+
+ // P6.2: heavy landings transmit a short vibration through the city depth.
+ const rumble = createScene();
+ await new Promise(resolve => setImmediate(resolve));
+ rumble.api.recordLanding({kind: 'landing', x: 200, at: 1, force: 0.9});
+ rumble.draw();
+ const rumbleDraws = rumble.calls.slice(-3);
+ const [farY, midY, nearY] = rumbleDraws.map(([, , y]) => y);
+ assert(Math.abs(midY) > Math.abs(farY), 'mid buildings react more strongly than the distant skyline');
+ assert.notEqual(midY, 0, 'heavy landing must create a visible mid-layer response');
+ assert.equal(nearY, 0, 'near road must remain world-locked during building vibration');
+ assert.notEqual(rumble.status.weight.environmentRumble, 0);
+ rumble.window.__xlImmersionPrefs.reduceMotion = true;
+ rumble.draw();
+ assert.equal(rumble.status.weight.environmentRumble, 0, 'reduced motion suppresses building vibration');
+ assert.deepEqual(rumble.calls.slice(-3).map(([, , y]) => y), [0, 0, 0]);
+
+ const lowFxRumble = createScene();
+ await new Promise(resolve => setImmediate(resolve));
+ lowFxRumble.api.recordLanding({kind: 'landing', x: 200, at: 1, force: 1});
+ lowFxRumble.window.__xlImmersionPrefs.lowEffects = true;
+ lowFxRumble.draw();
+ assert.equal(lowFxRumble.status.weight.environmentRumble, 0, 'low-effects mode suppresses building vibration');
+
+ const decayRumble = createScene();
+ await new Promise(resolve => setImmediate(resolve));
+ decayRumble.api.recordLanding({kind: 'landing', x: 200, at: 1, force: 0.9});
+ decayRumble.draw();
+ for (let i = 0; i < 40; i++) decayRumble.draw();
+ assert.equal(decayRumble.status.weight.environmentRumble, 0, 'building vibration decays without a lingering offset');
 
  env.setPawX(300);
  env.draw();
@@ -341,6 +544,6 @@ async function main() {
   failed.draw();
   assert.deepEqual(failed.calls[0], [failed.original, 0, 0, 400, 240]);
  }
- console.log('Fenrir tests passed: release assets and host, actual iframe injection, camera continuity, sole anchor, world-space water, P5 settling and mark budget, and fallback.');
+ console.log('Fenrir tests passed: release assets and host, actual iframe injection, camera continuity, sole anchor, world-space water, P5 settling and mark budget, skippable 30 m establishing shot, and fallback.');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

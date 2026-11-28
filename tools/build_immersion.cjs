@@ -5,7 +5,7 @@ const vm = require('vm');
 
 const root = path.resolve(__dirname, '..');
 const gameDir = path.join(root, process.argv.includes('--release') ? 'dist-release/game' : 'dist');
-const src = fs.readFileSync(path.join(root, 'src', 'immersion-v1.js'), 'utf8');
+const src = fs.readFileSync(path.join(root, 'src', 'immersion-v1.js'), 'utf8').replace(/\r\n/g, '\n');
 const begin = '/* IMMERSION_V1_BEGIN */';
 const end = '/* IMMERSION_V1_END */\n';
 const block = `${begin}\n${src}\n${end}`;
