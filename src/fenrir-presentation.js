@@ -45,6 +45,7 @@
 #xl-shell.fn-observation #fn-enter-button {
  pointer-events:auto;min-height:44px;padding:8px 16px;border:1px solid #5e879d;
  border-radius:3px;background:#153248;color:#eaf8fc;font-weight:700;font-size:14px;
+ touch-action:manipulation;
 }
 #xl-shell.fn-observation.fn-portrait #fn-entry{padding-bottom:clamp(12px,3vh,26px)}
 #xl-shell.fn-observation #xl-hud {
@@ -113,6 +114,10 @@
   enter.id = 'fn-enter-button';
   enter.type = 'button';
   enter.textContent = '进入猎场';
+  // The playfield handles drag gestures and cancels touchend.
+  for (const type of ['touchstart', 'touchmove', 'touchend', 'touchcancel']) {
+   enter.addEventListener(type, event => event.stopPropagation(), {passive: true});
+  }
   enter.addEventListener('click', () => {
    active = true;
    activated = true;
