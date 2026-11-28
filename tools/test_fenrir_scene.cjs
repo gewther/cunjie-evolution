@@ -11,6 +11,7 @@ const host = read(game, 'scripts/impact-host-3.js');
 const scene = read(game, 'scripts/fenrir-scene-v1.js');
 const controls = read(root, 'src/fenrir-controls.js').replace(/\r\n/g, '\n');
 const bridge = read(root, 'src/fenrir-scene-bridge.js').replace(/\r\n/g, '\n');
+const presentation = read(root, 'src/fenrir-presentation.js').replace(/\r\n/g, '\n');
 assert.equal(scene, read(root, 'src/fenrir-scene-v1.js'));
 
 const names = ['far', 'mid', 'near'];
@@ -39,11 +40,53 @@ vm.runInNewContext(fn, placement);
 const rendered = placement.legacySource('free', 'motion.png', true);
 assert(rendered.includes('<base href="https://example.test/cunjie-evolution/">'));
 assert(rendered.includes('<script src="scripts/fenrir-scene-v1.js"></script>'));
-assert(rendered.includes(controls + bridge + anchor));
+assert(rendered.includes(controls + bridge + presentation + anchor));
 for (const script of rendered.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/gi)) new vm.Script(script[1]);
 assert(!placement.legacySource('free', 'custom.png', false).includes(bridge));
 assert(!placement.legacySource('free', 'custom.png', false).includes(controls));
+assert(!placement.legacySource('free', 'custom.png', false).includes(presentation));
 assert(!placement.legacySource('free', 'custom.png', false).includes('scripts/fenrir-scene-v1.js'));
+
+const renderQuality = read(game, 'scripts/render-quality.js');
+assert.equal(renderQuality, read(root, 'src/render-quality.js').replace(/\r\n/g, '\n'));
+const qualityContext = {};
+vm.runInNewContext(renderQuality, qualityContext);
+const qualityApi = qualityContext.CunjieRenderQuality;
+function qualityFixture({coarse = true, webgl = true, width = 800} = {}) {
+ const view = {
+  devicePixelRatio: 3,
+  matchMedia: () => ({matches: coarse}),
+  addEventListener() {}
+ };
+ const scene = {width: 400, height: 240};
+ const display = {clientWidth: width, ownerDocument: {defaultView: view}, dataset: {}, style: {}};
+ const profile = qualityApi.create(scene, display, webgl ? {viewport() {}} : null, 400, 240, false);
+ return {scene, display, profile};
+}
+const storyQuality = qualityFixture();
+const fenrirQuality = qualityFixture();
+fenrirQuality.profile.setFenrirMode('auto');
+storyQuality.profile.frame(0);
+fenrirQuality.profile.frame(0);
+assert.equal(storyQuality.scene.height, 1080, 'story still follows the host setting');
+assert.equal(fenrirQuality.scene.height, 720, 'mobile landscape starts at or below 720p');
+for (let t = 50; t <= 2500; t += 50) fenrirQuality.profile.frame(t);
+assert.equal(fenrirQuality.scene.height, 540, 'sustained low frame rate reduces resolution');
+fenrirQuality.profile.setFenrirMode('hd');
+fenrirQuality.profile.frame(2600);
+assert.equal(fenrirQuality.scene.height, 1080, 'manual HD overrides mobile adaptation');
+qualityApi.setMode('qhd');
+storyQuality.profile.frame(2600);
+assert.equal(storyQuality.scene.height, 1440);
+assert.equal(fenrirQuality.scene.height, 1080);
+const canvasQuality = qualityFixture({webgl: false});
+canvasQuality.profile.setFenrirMode('auto');
+canvasQuality.profile.frame(0);
+assert.equal(canvasQuality.scene.height, 480, 'Canvas fallback has a smaller starting budget');
+const portraitQuality = qualityFixture({width: 390});
+portraitQuality.profile.setFenrirMode('auto');
+portraitQuality.profile.frame(0);
+assert.equal(portraitQuality.scene.height, 360);
 
 function createScene({textureLimit = 4096, failMid = false} = {}) {
  let tick = 1000;

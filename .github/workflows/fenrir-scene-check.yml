@@ -7,11 +7,14 @@ on:
     branches:
       - main
       - fix/p0-integration
+      - feat/p62a-scene-lighting
     paths:
       - ".github/workflows/fenrir-scene-check.yml"
       - "src/fenrir-scene-v1.js"
       - "src/fenrir-scene-bridge.js"
       - "src/fenrir-controls.js"
+      - "src/fenrir-presentation.js"
+      - "src/render-quality.js"
       - "src/free-impact-v6.js"
       - "src/immersion-v1.js"
       - "src/tech-dread-v1.js"

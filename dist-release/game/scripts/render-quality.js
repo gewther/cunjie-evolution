@@ -21,6 +21,7 @@
  function create(scene, display, graphics, width, height, classicOnly) {
   const view = display.ownerDocument.defaultView;
   let activeMode, cssWidth = 0, lastDpr = 0, dirty = true;
+  let fenrirMode = null, fenrirMobile = false, profileChanged = false;
   let autoLimit = 1080, sampleStart = 0, frames = 0, fastSamples = 0;
   if (typeof view.ResizeObserver === 'function') {
    const observer = new view.ResizeObserver(entries => {
@@ -36,29 +37,41 @@
    smooth: false,
    displayScaleX: 2,
    displayScaleY: 2,
+   setFenrirMode(value) {
+    if (fenrirMode === value) return;
+    fenrirMode = normalize(value);
+    fenrirMobile = !!view.matchMedia?.('(any-pointer: coarse)').matches;
+    profileChanged = true;
+   },
    frame(now) {
-    const selected = classicOnly ? 'classic' : mode;
-    const dpr = view.devicePixelRatio || 1;
-    if (selected !== activeMode || dpr !== lastDpr) {
+    const selected = classicOnly ? 'classic' : fenrirMode ?? mode;
+    const fenrirAuto = fenrirMode !== null && selected === 'auto';
+    const limit = fenrirAuto && !graphics ? 480 : fenrirAuto && fenrirMobile ? 720 : 1080;
+    const dpr = Math.min(view.devicePixelRatio || 1, fenrirAuto && fenrirMobile ? 1.5 : Infinity);
+    if (profileChanged || selected !== activeMode || dpr !== lastDpr) {
      activeMode = selected;
      lastDpr = dpr;
-     autoLimit = 1080;
+     autoLimit = limit;
+     profileChanged = false;
      sampleStart = now;
      frames = fastSamples = 0;
      dirty = true;
     }
 
-    if (selected === 'auto' && !display.ownerDocument.hidden) {
+    if (selected === 'auto' && display.ownerDocument.hidden) {
+     sampleStart = now;
+     frames = fastSamples = 0;
+    } else if (selected === 'auto') {
      frames++;
      const elapsed = now - sampleStart;
      if (elapsed >= 2400) {
       const fps = frames * 1000 / elapsed;
       fastSamples = fps >= 52 ? fastSamples + 1 : 0;
-      if (fps < 38 && scene.height > height * minimumScale) {
+      if (fps < (fenrirAuto ? 46 : 38) && scene.height > height * minimumScale) {
        autoLimit = Math.max(Math.ceil(height * minimumScale), Math.floor(scene.height * .77 / 60) * 60);
        dirty = true;
-      } else if (fastSamples >= 3 && autoLimit < 1080) {
-       autoLimit = Math.min(1080, autoLimit + 120);
+      } else if (fastSamples >= 3 && autoLimit < limit) {
+       autoLimit = Math.min(limit, autoLimit + 120);
        fastSamples = 0;
        dirty = true;
       }
