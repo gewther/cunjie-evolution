@@ -5,7 +5,7 @@
 | 文件 | 职责 |
 | --- | --- |
 | `src/scene-lighting-v1.js` | 依据场景和现有设置选择环境光、上方阴影、地面反照和侧光。限制在前后脚绘制期间，并匹配实际图集单元或高清分帧。 |
-| `src/realm-renderer.js` | 从两个兼容宿主提取共同的精灵渲染器。WebGL 使用每顶点的 RGB 增益，Canvas 回退复用单个局部画布。 |
+| `src/realm-renderer.js` | 从两个兼容宿主提取共同的精灵渲染器。WebGL 仅对脚部切换到带每顶点 RGB 增益的着色器，Canvas 回退复用单个局部画布。 |
 | `tools/build_art_v1.cjs` | 把共同渲染器和光照模块注入剧情、自由及芬里尔共用的发行入口。 |
 | `tools/test_scene_lighting.cjs`、`tools/build_all.py` | 回归检查和完整构建入口。 |
 | `.github/workflows/fenrir-scene-check.yml` | 对以 PR #9 分支为目标的草稿运行原有构建门禁。 |

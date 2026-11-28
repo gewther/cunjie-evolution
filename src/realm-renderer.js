@@ -41,53 +41,65 @@ function shader(n, k, sc) {
 	return s;
 }
 
-const vert_shader = shader("vertex", gl.VERTEX_SHADER, `
-	attribute vec2 a_pos, a_uv;
-	attribute float a_alpha;
-	attribute vec3 a_light;
-	varying vec2 v_uv;
-	varying float v_alpha;
-	varying vec3 v_light;
-	uniform vec2 u_screen_size;
-	uniform vec2 u_texture_size;
-	uniform float u_smooth;
-	void main() {
-		v_uv = (u_smooth > 0.5 ? a_uv : floor(a_uv))/u_texture_size;
-		v_alpha = a_alpha;
-		v_light = a_light;
-		vec2 position = u_smooth > 0.5 ? a_pos : floor(a_pos);
-		gl_Position = vec4(vec2(-1.0,1.0)+(position*u_screen_size),0.0,1.0);
+const a_pos = 0, a_uv = 1, a_alpha = 2, a_light = 3;
+function makeSpriteProgram(lit) {
+	const vertShader = shader("vertex", gl.VERTEX_SHADER, `
+		attribute vec2 a_pos, a_uv;
+		attribute float a_alpha;
+		${lit ? "attribute vec3 a_light;" : ""}
+		varying vec2 v_uv;
+		varying float v_alpha;
+		${lit ? "varying vec3 v_light;" : ""}
+		uniform vec2 u_screen_size;
+		uniform vec2 u_texture_size;
+		uniform float u_smooth;
+		void main() {
+			v_uv = (u_smooth > 0.5 ? a_uv : floor(a_uv))/u_texture_size;
+			v_alpha = a_alpha;
+			${lit ? "v_light = a_light;" : ""}
+			vec2 position = u_smooth > 0.5 ? a_pos : floor(a_pos);
+			gl_Position = vec4(vec2(-1.0,1.0)+(position*u_screen_size),0.0,1.0);
+		}
+	`);
+
+	const fragShader = shader("fragment", gl.FRAGMENT_SHADER, `
+		precision mediump float;
+		varying vec2 v_uv;
+		varying float v_alpha;
+		${lit ? "varying vec3 v_light;" : ""}
+		uniform sampler2D u_texture;
+		void main() {
+			gl_FragColor = texture2D(u_texture,v_uv)${lit ? "*vec4(v_light,1.0)" : ""}*v_alpha;
+		}
+	`);
+
+	const program = gl.createProgram();
+	gl.attachShader(program, vertShader);
+	gl.attachShader(program, fragShader);
+	gl.bindAttribLocation(program, a_pos, "a_pos");
+	gl.bindAttribLocation(program, a_uv, "a_uv");
+	gl.bindAttribLocation(program, a_alpha, "a_alpha");
+	if (lit) gl.bindAttribLocation(program, a_light, "a_light");
+	gl.linkProgram(program);
+	gl.deleteShader(vertShader);
+	gl.deleteShader(fragShader);
+	if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+		throw new Error("shader link error: " + gl.getProgramInfoLog(program));
 	}
-`);
+	return {
+		program,
+		screenSize: gl.getUniformLocation(program, "u_screen_size"),
+		textureSize: gl.getUniformLocation(program, "u_texture_size"),
+		smooth: gl.getUniformLocation(program, "u_smooth"),
+		sampler: gl.getUniformLocation(program, "u_texture")
+	};
+}
 
-const frag_shader = shader("fragment", gl.FRAGMENT_SHADER, `
-	precision mediump float;
-	varying vec2 v_uv;
-	varying float v_alpha;
-	varying vec3 v_light;
-	uniform sampler2D u_texture;
-	void main() {
-		gl_FragColor = texture2D(u_texture,v_uv)*vec4(v_light,1.0)*v_alpha;
-	}
-`);
-
-const sprg = gl.createProgram();
-gl.attachShader(sprg, vert_shader);
-gl.attachShader(sprg, frag_shader);
-gl.linkProgram(sprg);
-if (!gl.getProgramParameter(sprg, gl.LINK_STATUS))
-	throw new Error("shader link error: " + gl.getProgramInfoLog(sprg));
-gl.useProgram(sprg);
-
-const
-	a_pos   = gl.getAttribLocation(sprg, "a_pos"),
-	a_uv    = gl.getAttribLocation(sprg, "a_uv"),
-	a_alpha = gl.getAttribLocation(sprg, "a_alpha"),
-	a_light = gl.getAttribLocation(sprg, "a_light"),
-	u_screen_size  = gl.getUniformLocation(sprg, "u_screen_size"),
-	u_texture_size = gl.getUniformLocation(sprg, "u_texture_size"),
-	u_smooth       = gl.getUniformLocation(sprg, "u_smooth"),
-	u_texture      = gl.getUniformLocation(sprg, "u_texture");
+// Keep large terrain and background quads on the original shader.
+const plainProgram = makeSpriteProgram(false);
+const litProgram = makeSpriteProgram(true);
+let spriteProgram = plainProgram;
+gl.useProgram(spriteProgram.program);
 
 const quads_per_draw = 16000;
 
@@ -110,7 +122,6 @@ gl.bufferData(gl.ARRAY_BUFFER, vbuflen*vbufstride, gl.DYNAMIC_DRAW);
 gl.enableVertexAttribArray(a_pos);
 gl.enableVertexAttribArray(a_uv);
 gl.enableVertexAttribArray(a_alpha);
-gl.enableVertexAttribArray(a_light);
 gl.vertexAttribPointer(a_pos,   2, gl.FLOAT, false, vbufstride, 0);
 gl.vertexAttribPointer(a_uv,    2, gl.FLOAT, false, vbufstride, 8);
 gl.vertexAttribPointer(a_alpha, 1, gl.FLOAT, false, vbufstride, 16);
@@ -162,10 +173,10 @@ function clear(r, g, b, a) {
 function render() {
 	if (inds == 0)
 		return;
-	gl.uniform1i(u_texture, 0);
-	gl.uniform2f(u_screen_size, 2/w, -2/h);
-	gl.uniform2f(u_texture_size, texture.w || texture.size || 1, texture.h || texture.size || 1);
-	gl.uniform1f(u_smooth, textureSmooth ? 1 : 0);
+	gl.uniform1i(spriteProgram.sampler, 0);
+	gl.uniform2f(spriteProgram.screenSize, 2/w, -2/h);
+	gl.uniform2f(spriteProgram.textureSize, texture.w || texture.size || 1, texture.h || texture.size || 1);
+	gl.uniform1f(spriteProgram.smooth, textureSmooth ? 1 : 0);
 	gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(vbuf, 0, vertidx));
 	gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, 0, new Uint16Array(ibuf, 0, inds));
 	gl.drawElements(gl.TRIANGLES, inds, gl.UNSIGNED_SHORT, 0);
@@ -179,15 +190,25 @@ function vert(x, y, ux, uy, light, offset) {
 	vbufv[vertidx++] = ux, vbufv[vertidx++] = uy;
 	vbufv[vertidx++] = alpha;
 	const color = vertidx++ * 4;
-	vbufBytes[color] = light ? Math.round(light[offset]*255) : 255;
-	vbufBytes[color+1] = light ? Math.round(light[offset+1]*255) : 255;
-	vbufBytes[color+2] = light ? Math.round(light[offset+2]*255) : 255;
+	if (light) {
+		vbufBytes[color] = Math.round(light[offset]*255);
+		vbufBytes[color+1] = Math.round(light[offset+1]*255);
+		vbufBytes[color+2] = Math.round(light[offset+2]*255);
+	}
 	verts++;
 }
 
 
 function quad(x, y, w, h, ux, uy, uw, uh, sprite) {
 	const light = sprite && window.__xlSceneLighting?.gains(sprite, y, h, ux, uy, uw || w, uh || h);
+	const nextProgram = light ? litProgram : plainProgram;
+	if (nextProgram !== spriteProgram) {
+		render();
+		spriteProgram = nextProgram;
+		gl.useProgram(spriteProgram.program);
+		if (light) gl.enableVertexAttribArray(a_light);
+		else gl.disableVertexAttribArray(a_light);
+	}
 	x = floor(x), y = floor(y), uw = uw || w, uh = uh || h;
 	if(inds+6 >= ibuflen || verts+4 >= vbuflen)
 		render();
