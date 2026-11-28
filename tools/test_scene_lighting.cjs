@@ -102,6 +102,19 @@ lighting.paintLitSprite(canvasTarget, {}, 0, 0, 480, 768, 0, 0, 160, 256, lowHd,
 assert.equal(calls.filter(x => x === 'gradient').length, 4);
 assert.equal(calls.filter(x => x === 'canvas').length, 1, 'fallback reuses its scratch canvas');
 
+const atlasTile = ['giant', 0, 0, 160, 256, true, 3];
+let drawnQuad;
+const atlasDraw = {
+ textures: new Map([['giant', {}]]),
+ set_texture() {},
+ uxoff: 0, uyoff: 0, floor: Math.floor,
+ quad(...args) { drawnQuad = args; },
+};
+vm.runInNewContext(renderer.slice(renderer.indexOf('function sprite(')), atlasDraw);
+atlasDraw.sprite(atlasTile, 0, 228, 2, 0, 1);
+assert.deepEqual(drawnQuad, [0, -28, 160, 256, 0, 512, 160, 256, atlasTile],
+ 'unscaled atlas sprites send the crop size before the optional lighting descriptor');
+
 for (const kind of ['impact', 'free']) {
  const bundle = read(`dist-release/game/data/touch-v1-${kind}.js`);
  const html = JSON.parse(bundle.slice(bundle.indexOf('=') + 1).trim().replace(/;$/, ''));

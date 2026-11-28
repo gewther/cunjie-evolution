@@ -242,7 +242,7 @@ function sprite(s, x, y, f, cx, cy) {
 	if (f && (f = floor(f)))
 		(sp = s[6]) ? (s[5] ? (fy = f % sp, fx = floor(f / sp)) : (fx = f % sp, fy = floor(f / sp)))
 		            : (s[5] ?  fy = f : fx = f);
-	quad(x-(cx||0)*uw, y-(cy||0)*uh, uw, uh, s[1]+uxoff+fx*uw, s[2]+uyoff+fy*uh, s);
+	quad(x-(cx||0)*uw, y-(cy||0)*uh, uw, uh, s[1]+uxoff+fx*uw, s[2]+uyoff+fy*uh, uw, uh, s);
 }
 
 function sprite_scaled(s, x, y, w, h) {
