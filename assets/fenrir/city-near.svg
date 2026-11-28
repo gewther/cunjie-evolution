@@ -32,6 +32,14 @@
 </g>
 <!-- Wet shopfront reflection bands & cyan/warm puddles -->
 <g fill="#6dc1d0" opacity=".16"><path d="M40 207q34-7 76 0t62 0q-12 8-54 7t-84-7Z"/><path d="M438 216q28-6 66 0t55 0q-9 7-48 7t-73-7Z"/><path d="M900 207q40-8 90 0t65 0q-14 8-70 8t-85-8Z"/><path d="M1350 214q38-7 78 0t62 0q-13 8-66 8t-74-8Z"/><path d="M1880 207q42-8 92 0t65 0q-14 8-70 8t-87-8Z"/><path d="M2240 216q28-6 66 0t55 0q-9 7-48 7t-73-7Z"/></g>
+<!-- The maintenance entrance has its own curb paint and reflected warning light. -->
+<g fill="#a7b5b4" opacity=".39">
+ <path d="M1390 204h7l-8 16h-7Zm12 0h7l-8 16h-7Zm12 0h7l-8 16h-7Zm12 0h7l-8 16h-7Z"/>
+</g>
+<path d="M1370 200h7l8 15h-15Z" fill="#ff4d5a" opacity=".18"/>
+<g stroke="#7b9ca9" stroke-width="1" stroke-opacity=".42">
+ <path d="M1184 199h24v4h-24zM1188 200v2m4-2v2m4-2v2m4-2v2m4-2v2"/>
+</g>
 <!-- Required 150m lane markings along y=228 -->
 <g stroke="#dce0cf" stroke-opacity=".54" stroke-width="2"><path d="M20 228h42M104 228h42M188 228h42M272 228h42M356 228h42M440 228h42M524 228h42M608 228h42M692 228h42M776 228h42M860 228h42M944 228h42M1028 228h42M1112 228h42M1196 228h42M1280 228h42M1364 228h42M1448 228h42M1532 228h42M1616 228h42M1700 228h42M1784 228h42M1868 228h42M1952 228h42M2036 228h42M2120 228h42M2204 228h42M2288 228h42"/></g>
 <!-- Wet puddles around y=228 contact band with mirror shimmer -->
