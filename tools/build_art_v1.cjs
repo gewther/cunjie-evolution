@@ -10,10 +10,14 @@ const geo = JSON.parse(geoRaw);
 const rawSrc = fs.readFileSync(path.join(root, 'src', 'art-overhaul-v1.js'), 'utf8').replace(/\r\n/g, '\n');
 if (!rawSrc.includes('__XL_HD_GEO__')) throw new Error('Missing __XL_HD_GEO__ placeholder in src/art-overhaul-v1.js');
 const src = rawSrc.replace('__XL_HD_GEO__', JSON.stringify(geo));
+const renderer = fs.readFileSync(path.join(root, 'src', 'realm-renderer.js'), 'utf8').replace(/\r\n/g, '\n').trim();
+const lighting = fs.readFileSync(path.join(root, 'src', 'scene-lighting-v1.js'), 'utf8').replace(/\r\n/g, '\n').trim();
 
 const begin = '/* ART_OVERHAUL_V1_BEGIN */';
 const end = '/* ART_OVERHAUL_V1_END */\n';
-const block = `${begin}\n${src}\n${end}`;
+const block = `${begin}\n${src}\n${lighting}\n${end}`;
+const rendererBegin = '/* Shared sprite renderer for the story and free-mode legacy runtimes. */';
+const rendererEnd = '// #custom uploading';
 
 function injectInto(relFile) {
   const file = path.join(gameDir, relFile);
@@ -21,6 +25,16 @@ function injectInto(relFile) {
   const eq = raw.indexOf('=');
   const prefix = raw.slice(0, eq + 1);
   let html = JSON.parse(raw.slice(eq + 1).trim().replace(/;$/, ''));
+
+  const rendererStart = html.includes(rendererBegin)
+    ? html.indexOf(rendererBegin)
+    : html.indexOf('function installRealmRenderer()');
+  const rendererStop = html.indexOf(rendererEnd, rendererStart);
+  const oldRenderer = html.slice(rendererStart, rendererStop);
+  if (rendererStart < 0 || rendererStop < 0 || !oldRenderer.includes('function sprite_scaled(')) {
+    throw new Error(`Missing legacy renderer boundaries in ${relFile}`);
+  }
+  html = html.slice(0, rendererStart) + renderer + '\n\n' + html.slice(rendererStop);
 
   if (html.includes(begin)) {
     const a = html.indexOf(begin);
