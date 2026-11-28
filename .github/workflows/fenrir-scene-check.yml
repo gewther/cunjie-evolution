@@ -3,13 +3,16 @@ on:
   push:
     branches:
       - feat/fenrir-city-scale-scene
+      - feat/fenrir-spatial-fx-p62b
   pull_request:
     branches:
       - main
       - fix/p0-integration
+      - feat/p62a-scene-lighting
     paths:
       - ".github/workflows/fenrir-scene-check.yml"
       - "src/fenrir-scene-v1.js"
+      - "src/fenrir-spatial-fx-v1.js"
       - "src/fenrir-scene-bridge.js"
       - "src/fenrir-controls.js"
       - "src/free-impact-v6.js"
@@ -40,6 +43,7 @@ on:
       - "tools/test_art_hd.cjs"
       - "tools/test_scene_lighting.cjs"
       - "tools/test_fenrir_scene.cjs"
+      - "tools/test_fenrir_spatial_fx.cjs"
       - "tools/test_tech_dread.cjs"
 jobs:
   checks:
