@@ -52,6 +52,12 @@ assert.equal(warm[0], airborne[0], 'lighting at the top does not change with hei
 context.window.__cunjieRoomTheme = 'rooftop-night';
 const cold = front(-54);
 assert(cold[8] > cold[6], 'room switch applies night lighting');
+delete context.window.__cunjieRoomTheme;
+const roomPicker = {value: 'rooftop-night'};
+context.window.parent = {document: {getElementById: () => roomPicker}};
+assert.deepEqual(front(-54), cold, 'free mode follows the host room picker');
+roomPicker.value = 'rooftop-day';
+assert.deepEqual(front(-54), warm, 'free mode follows live picker changes');
 assert.equal(lighting.getSceneLightingProfile('rooftop-day').shadowDirection, 1);
 assert.equal(lighting.getSceneLightingProfile('rooftop-night').shadowDirection, -1);
 context.window.__cunjieRoomTheme = 'rain';

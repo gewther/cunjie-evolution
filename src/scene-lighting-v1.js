@@ -17,6 +17,7 @@
  let isBackFoot = false;
  let lowEffects = false;
  let lightCanvas;
+ let roomPicker;
 
  function getSceneLightingProfile(sceneId) {
   return profiles.get(sceneId) ?? indoor;
@@ -29,7 +30,13 @@
    if (realmIndex === 1) return 'indoor';
    if (typeof roomKey !== 'undefined') return roomKey;
   }
-  return window.__cunjieRoomTheme || 'rooftop-day';
+  if (window.__cunjieRoomTheme) return window.__cunjieRoomTheme;
+  try {
+   roomPicker ??= window.parent.document.getElementById('roomTheme');
+   return roomPicker?.value || window.parent.localStorage.getItem('cunjie-room-theme') || 'rooftop-day';
+  } catch {
+   return 'rooftop-day';
+  }
  }
 
  function withFootLighting(drawFoot, back) {
