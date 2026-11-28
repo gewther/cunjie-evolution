@@ -6,6 +6,7 @@ on:
   pull_request:
     branches:
       - main
+      - fix/p0-integration
     paths:
       - ".github/workflows/fenrir-scene-check.yml"
       - "src/fenrir-scene-v1.js"
@@ -16,6 +17,8 @@ on:
       - "src/tech-dread-v1.js"
       - "src/art-overhaul-v1.js"
       - "src/art-hd-geo.json"
+      - "src/realm-renderer.js"
+      - "src/scene-lighting-v1.js"
       - "assets/fenrir/*.svg"
       - "assets/tinies/*.webp"
       - "assets/rooms/*.webp"
@@ -35,6 +38,7 @@ on:
       - "tools/build_offline_html.py"
       - "tools/build_tech_dread.cjs"
       - "tools/test_art_hd.cjs"
+      - "tools/test_scene_lighting.cjs"
       - "tools/test_fenrir_scene.cjs"
       - "tools/test_tech_dread.cjs"
 jobs:

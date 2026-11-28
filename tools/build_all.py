@@ -37,6 +37,7 @@ TEST_STEPS = [
     ("Free & Fenrir responsive touch tests", ["node", "tools/test_free_touch.cjs"]),
     ("Fenrir city scene tests", ["node", "tools/test_fenrir_scene.cjs"]),
     ("HD art overhaul tests", ["node", "tools/test_art_hd.cjs"]),
+    ("Scene lighting tests", ["node", "tools/test_scene_lighting.cjs"]),
     ("High-tech dread atmosphere tests", ["node", "tools/test_tech_dread.cjs"]),
     ("PWA manifest & Service Worker tests", ["node", "tools/test_pwa.cjs"]),
 ]
