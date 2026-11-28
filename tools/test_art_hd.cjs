@@ -306,6 +306,12 @@ async function testRuntimeBehavior() {
  assert.equal(trailEnv.drawCalls[0][3], 160, 'Trail width must equal paw.width');
  assert(trailEnv.drawCalls[0][4] > 256 && trailEnv.drawCalls[0][4] < 270, 'Trail height must scale by 256/160 aspect ratio');
 
+ trailEnv.drawCalls.length = 0;
+ trailEnv.sandbox.realmPrefs = { impactFx: false };
+ trailEnv.sandbox.draw_front_paw();
+ assert.deepEqual(trailEnv.drawCalls, [['orig_front']], 'free-impact-v6 must suppress legacy trails when impactFx=false');
+ trailEnv.sandbox.realmPrefs = { impactFx: true };
+
  // 5b: HD airborne normal vs reduceMotion vs lowEffects
  await new Promise(r => setImmediate(r));
  await new Promise(r => setImmediate(r));
@@ -325,6 +331,12 @@ async function testRuntimeBehavior() {
  trailEnv.sandbox.window.__xlImmersionPrefs = { reduceMotion: false, lowEffects: true };
  trailEnv.sandbox.draw_front_paw();
  assert.equal(trailEnv.drawCalls.filter(c => Array.isArray(c[0]) && c[0][0] === 'xl-art-hd-aj5-1').length, 1, 'lowEffects must suppress HD trails while keeping main foot');
+
+ trailEnv.drawCalls.length = 0;
+ trailEnv.sandbox.window.__xlImmersionPrefs = { reduceMotion: false, lowEffects: false };
+ trailEnv.sandbox.realmPrefs = { impactFx: false };
+ trailEnv.sandbox.draw_front_paw();
+ assert.equal(trailEnv.drawCalls.filter(c => Array.isArray(c[0]) && c[0][0] === 'xl-art-hd-aj5-1').length, 1, 'impactFx=false must suppress HD Free Mode trails while keeping main foot');
 }
 
 function testHostAndOffline() {

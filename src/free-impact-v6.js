@@ -171,6 +171,7 @@ if(freeOldSetYoff&&typeof oc!=='undefined'){
  };
 }
 function freeTrailsEnabled(){
+ if(typeof realmPrefs!=='undefined'&&realmPrefs&&realmPrefs.impactFx===false)return false;
  const imm=(typeof window!=='undefined'&&window.__xlImmersionPrefs)||null;
  if(imm&&(imm.reduceMotion||imm.lowEffects))return false;
  if(typeof realmMood!=='undefined'&&realmMood&&(realmMood.reduceMotion||realmMood.lowEffects))return false;
