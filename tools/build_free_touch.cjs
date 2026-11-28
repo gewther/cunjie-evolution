@@ -5,7 +5,7 @@ const vm = require('vm');
 
 const root = path.resolve(__dirname, '..');
 const gameDir = path.join(root, process.argv.includes('--release') ? 'dist-release/game' : 'dist');
-const src = fs.readFileSync(path.join(root, 'src', 'free-touch-responsive.js'), 'utf8');
+const src = fs.readFileSync(path.join(root, 'src', 'free-touch-responsive.js'), 'utf8').replace(/\r\n/g, '\n');
 const begin = '/* FREE_TOUCH_V1_BEGIN */';
 const end = '/* FREE_TOUCH_V1_END */\n';
 const block = `${begin}\n${src}\n${end}`;

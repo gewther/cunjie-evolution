@@ -174,6 +174,32 @@ async function testServiceWorker() {
  assert.equal(resolvedAsset.ok, true, 'Offline asset must resolve from cache');
 }
 
+function testClientMountInNestedLauncher() {
+ const clientCode = fs.readFileSync(path.join(gameDir, 'scripts', 'pwa.js'), 'utf8');
+ const node = () => ({
+  setAttribute() {}, append() {},
+  classList: { add() {}, remove() {}, toggle() {} },
+ });
+ let mounted;
+ const menu = {before(bar) { mounted = bar; }};
+ const sandbox = {
+  window: {addEventListener() {}},
+  location: {protocol: 'https:'},
+  navigator: {},
+  document: {
+   createElement: node,
+   head: {appendChild() {}},
+   querySelector(selector) {
+    if (selector === '#home .menu') return menu;
+    if (selector === '#home article') return {};
+    return null;
+   },
+  },
+ };
+ vm.runInNewContext(clientCode, sandbox);
+ assert.equal(mounted?.id, 'pwaBar', 'install controls mount beside the nested launcher menu');
+}
+
 function testClientFileProtocolGuard() {
  const clientCode = fs.readFileSync(path.join(gameDir, 'scripts', 'pwa.js'), 'utf8');
  const fileSandbox = {
@@ -188,6 +214,7 @@ function testClientFileProtocolGuard() {
 async function main() {
  await testManifestAndHtml();
  await testServiceWorker();
+ testClientMountInNestedLauncher();
  testClientFileProtocolGuard();
  console.log('PWA tests passed: manifest, icons, SW two-tier cache, offline fetch fallback, and file:// guard.');
 }

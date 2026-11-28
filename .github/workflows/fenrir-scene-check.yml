@@ -3,24 +3,51 @@ on:
   push:
     branches:
       - feat/fenrir-city-scale-scene
+      - feat/fenrir-spatial-fx-p62b
   pull_request:
     branches:
       - main
+      - feat/fenrir-tower-scale-art
+      - fix/p0-integration
+      - feat/p62a-scene-lighting
     paths:
       - ".github/workflows/fenrir-scene-check.yml"
       - "src/fenrir-scene-v1.js"
+      - "src/fenrir-spatial-fx-v1.js"
       - "src/fenrir-scene-bridge.js"
       - "src/fenrir-controls.js"
+      - "src/fenrir-presentation.js"
+      - "src/render-quality.js"
+      - "src/free-impact-v6.js"
+      - "src/immersion-v1.js"
+      - "src/tech-dread-v1.js"
+      - "src/art-overhaul-v1.js"
+      - "src/art-hd-geo.json"
+      - "src/realm-renderer.js"
+      - "src/scene-lighting-v1.js"
       - "assets/fenrir/*.svg"
+      - "assets/tinies/*.webp"
+      - "assets/rooms/*.webp"
+      - "assets/*-hd/*.webp"
+      - "dist-release/game/scripts/host-2.js"
       - "dist-release/game/scripts/impact-host-3.js"
       - "dist-release/game/scripts/touch-v1-impact-host-1.js"
       - "dist-release/game/scripts/fenrir-scene-v1.js"
-      - "dist-release/game/assets/fenrir/*.svg"
+      - "dist-release/game/scripts/tech-dread-v1.js"
+      - "dist-release/game/assets/**/*"
+      - "dist-release/game/data/04-images-deferred.js"
       - "dist-release/game/data/touch-v1-*.js"
       - "tools/build_all.py"
+      - "tools/build_art_v1.cjs"
       - "tools/build_fenrir_scene.cjs"
+      - "tools/build_free_impact.cjs"
       - "tools/build_offline_html.py"
+      - "tools/build_tech_dread.cjs"
+      - "tools/test_art_hd.cjs"
+      - "tools/test_scene_lighting.cjs"
       - "tools/test_fenrir_scene.cjs"
+      - "tools/test_fenrir_spatial_fx.cjs"
+      - "tools/test_tech_dread.cjs"
 jobs:
   checks:
     runs-on: ubuntu-latest

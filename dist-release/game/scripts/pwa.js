@@ -60,10 +60,8 @@
 
  const homeArticle = document.querySelector('#home article');
  const homeMenu = document.querySelector('#home .menu');
- if (homeArticle) {
-  if (homeMenu) homeArticle.insertBefore(bar, homeMenu);
-  else homeArticle.appendChild(bar);
- }
+ if (homeMenu) homeMenu.before(bar);
+ else homeArticle?.appendChild(bar);
 
  let deferredPrompt = null;
  let swReg = null;
