@@ -48,7 +48,7 @@ assert(!placement.legacySource('free', 'custom.png', false).includes(bridge));
 assert(!placement.legacySource('free', 'custom.png', false).includes(controls));
 assert(!placement.legacySource('free', 'custom.png', false).includes('scripts/fenrir-scene-v1.js'));
 
-function createScene({textureLimit = 4096, failMid = false} = {}) {
+function createScene({textureLimit = 4096, failMid = false, document: documentOverride = null, windowOverrides = {}} = {}) {
  let tick = 1000;
  const original = ['fenrirCity', 0, 0, 400, 240];
  const textures = new Map();
@@ -58,9 +58,11 @@ function createScene({textureLimit = 4096, failMid = false} = {}) {
   frameHeight: 256, texture: 'giant', soleOffset: 2, contactCenter: 0.54,
   force: 0.8, age: 0, pressure: 0.9
  };
- const window = {__xlImmersionPrefs: {}};
+ const window = {__xlImmersionPrefs: {}, ...windowOverrides};
+ const document = documentOverride || {baseURI: 'https://example.test/cunjie-evolution/'};
+ window.document = document;
  const sandbox = {
-  window, URL, document: {baseURI: 'https://example.test/cunjie-evolution/'},
+  window, URL, document,
   performance: {now: () => tick += 16},
   console: {warn: (...args) => warnings.push(args)},
   Image: class {
@@ -254,8 +256,86 @@ function testCadence() {
  }
  assert(simulate('deliberate') > simulate('classic'));
 }
+
+function makeIntroDom({portrait = false, lowEffects = false} = {}) {
+ const timers = [];
+ const skipListeners = {};
+ const group = () => ({attrs:{},setAttribute(name,value){this.attrs[name]=value;}});
+ const wide = group(), tall = group();
+ const svg = {
+  attrs:{},
+  setAttribute(name,value){this.attrs[name]=value;},
+  querySelector(selector){return selector === '.wide' ? wide : selector === '.tall' ? tall : null;}
+ };
+ const skip = {
+  addEventListener(type,fn){skipListeners[type]=fn;},
+  focus(){},
+  click(){if(skipListeners.click)skipListeners.click({preventDefault(){},stopPropagation(){}});}
+ };
+ const overlay = {
+  className:'', innerHTML:'', removed:false, attrs:{}, style:{cssText:''},
+  classList:{toggle(name,value){overlay.attrs[name]=value;}},
+  setAttribute(name,value){this.attrs[name]=value;},
+  querySelector(selector){return selector === '.fenrir-establishing__svg' ? svg : selector === '.fenrir-establishing__skip' ? skip : null;},
+  remove(){this.removed=true;}
+ };
+ const document = {
+  baseURI:'https://example.test/cunjie-evolution/',
+  documentElement:{clientWidth:portrait?390:1280,clientHeight:portrait?844:720},
+  body:{child:null,appendChild(el){this.child=el;el.parentNode=this;}},
+  createElement(){return overlay;},
+  addEventListener(){},
+  removeEventListener(){}
+ };
+ const windowOverrides = {
+  __xlImmersionPrefs:{lowEffects},
+  innerWidth:portrait?390:1280,
+  innerHeight:portrait?844:720,
+  setTimeout(fn,ms){timers.push({fn,ms,cleared:false});return timers.length;},
+  clearTimeout(id){if(timers[id-1])timers[id-1].cleared=true;},
+  addEventListener(){},
+  removeEventListener(){}
+ };
+ return {document,windowOverrides,timers,overlay,skip,svg,wide,tall};
+}
+function testEstablishingShot() {
+ const wideDom = makeIntroDom();
+ const wideScene = createScene({document:wideDom.document,windowOverrides:wideDom.windowOverrides});
+ let completed = 0;
+ assert.equal(wideScene.api.showEstablishingShot(() => completed++), true);
+ assert.equal(wideDom.document.body.child, wideDom.overlay);
+ assert.match(wideDom.overlay.innerHTML,/data-reference-height="30m"/);
+ assert(wideDom.overlay.innerHTML.includes('30.0 m MECHA'));
+ assert(wideDom.overlay.innerHTML.includes('6.0 m STREETLIGHT'));
+ assert(wideDom.overlay.innerHTML.includes('4.5 m VEHICLE'));
+ assert.match(wideDom.overlay.innerHTML,/18\.0m \/ BLOCK/);
+ assert.match(wideDom.overlay.innerHTML,/fenrir-establishing__skip/);
+ assert.equal(wideDom.svg.attrs.viewBox,'0 0 1600 900');
+ assert.equal(wideDom.timers[0].ms,5200);
+ wideDom.skip.click();
+ wideDom.skip.click();
+ assert.equal(wideDom.overlay.removed,true);
+ assert.equal(completed,1,'skip and timer completion are idempotent');
+ assert.equal(wideDom.timers[0].cleared,true);
+
+ const tallDom = makeIntroDom({portrait:true,lowEffects:true});
+ const tallScene = createScene({document:tallDom.document,windowOverrides:tallDom.windowOverrides});
+ let tallCompleted = 0;
+ assert.equal(tallScene.api.showEstablishingShot(() => tallCompleted++),true);
+ assert.equal(tallDom.svg.attrs.viewBox,'0 0 900 1600');
+ assert.equal(tallDom.overlay.attrs['is-portrait'],true);
+ assert.equal(tallDom.timers[0].ms,3000);
+ assert.match(tallDom.overlay.innerHTML,/lowfx/);
+ tallDom.skip.click();
+ assert.equal(tallCompleted,1);
+
+ const fallback = createScene();
+ assert.equal(fallback.api.showEstablishingShot(()=>{}),false,'missing DOM must leave the game playable');
+}
+
 async function main() {
  testPersona();
+ testEstablishingShot();
  testContextualDialogue();
  testMemory();
  testCadence();
@@ -421,6 +501,6 @@ async function main() {
   failed.draw();
   assert.deepEqual(failed.calls[0], [failed.original, 0, 0, 400, 240]);
  }
- console.log('Fenrir tests passed: release assets and host, actual iframe injection, camera continuity, sole anchor, world-space water, P5 settling and mark budget, and fallback.');
+ console.log('Fenrir tests passed: release assets and host, actual iframe injection, camera continuity, sole anchor, world-space water, P5 settling and mark budget, skippable 30 m establishing shot, and fallback.');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });
