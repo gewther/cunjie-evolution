@@ -4,8 +4,6 @@
 
 ## 实物大机体与尺度摄影
 
-### Yokohama life-size Gundam
-
 ![Life-size robot statue with building and crane](https://images.unsplash.com/photo-1631791440984-dfad1c779742?auto=format&fit=crop&w=1800&q=85)
 
 - 摄影者：hidefumi ohmichi
@@ -46,7 +44,7 @@
 
 ## AI 概念图索引
 
-此前工作中已生成以下构图草图，原图保留在 ChatGPT Library/工作区，当前没有同步到本 PR：
+此前工作中已生成以下构图草图，原图保留在项目工作区/Library，当前没有同步到本 PR：
 - `雨街仰望巨型机甲.png`
 - `雨夜巨型机甲与仰望者.png`
 - `雨夜都市中的巨型机甲芬里尔.png`
