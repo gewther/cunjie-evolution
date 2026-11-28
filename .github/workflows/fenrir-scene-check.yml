@@ -6,6 +6,7 @@ on:
   pull_request:
     branches:
       - main
+      - feat/fenrir-tower-scale-art
     paths:
       - ".github/workflows/fenrir-scene-check.yml"
       - "src/fenrir-scene-v1.js"
