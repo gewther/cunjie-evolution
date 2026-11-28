@@ -305,9 +305,9 @@ function testEstablishingShot() {
  assert.equal(wideScene.api.showEstablishingShot(() => completed++), true);
  assert.equal(wideDom.document.body.child, wideDom.overlay);
  assert.match(wideDom.overlay.innerHTML,/data-reference-height="30m"/);
- assert.match(wideDom.overlay.innerHTML,/30\.0m MECHA/);
- assert.match(wideDom.overlay.innerHTML,/6\.0m STREETLIGHT/);
- assert.match(wideDom.overlay.innerHTML,/4\.5m VEHICLE/);
+ assert.match(wideDom.overlay.innerHTML,/30\\.0 ?m MECHA/);
+ assert.match(wideDom.overlay.innerHTML,/6\\.0 ?m STREETLIGHT/);
+ assert.match(wideDom.overlay.innerHTML,/4\\.5 ?m VEHICLE/);
  assert.match(wideDom.overlay.innerHTML,/18\.0m \/ BLOCK/);
  assert.match(wideDom.overlay.innerHTML,/fenrir-establishing__skip/);
  assert.equal(wideDom.svg.attrs.viewBox,'0 0 1600 900');
