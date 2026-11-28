@@ -9,8 +9,12 @@ const hostPath = path.join(gameDir, 'scripts', 'impact-host-3.js');
 const source = fs.readFileSync(path.join(root, 'src', 'fenrir-scene-v1.js'), 'utf8');
 const controls = fs.readFileSync(path.join(root, 'src', 'fenrir-controls.js'), 'utf8').replace(/\r\n/g, '\n');
 const bridge = fs.readFileSync(path.join(root, 'src', 'fenrir-scene-bridge.js'), 'utf8').replace(/\r\n/g, '\n');
+const presentation = fs.readFileSync(path.join(root, 'src', 'fenrir-presentation.js'), 'utf8').replace(/\r\n/g, '\n');
+const renderQuality = fs.readFileSync(path.join(root, 'src', 'render-quality.js'), 'utf8').replace(/\r\n/g, '\n');
+const integration = controls + bridge + presentation;
+new vm.Script(renderQuality, {filename: 'render-quality.js'});
 new vm.Script(source, {filename: 'fenrir-scene-v1.js'});
-new vm.Script(controls + bridge, {filename: 'fenrir iframe integration'});
+new vm.Script(integration, {filename: 'fenrir iframe integration'});
 
 let host = fs.readFileSync(hostPath, 'utf8');
 const start = host.indexOf('function legacySource');
@@ -26,7 +30,7 @@ const sourceFunction = [
  "  let source=DATA.freeLegacy.includes('<head>')?DATA.freeLegacy.replace('<head>','<head>'+tag):DATA.freeLegacy;",
  "  if(isFenrir){",
  "   const anchor='ptime = performance.now();\\nmainloop();';",
- "   const bridge=" + JSON.stringify(controls + bridge) + ";",
+ "   const bridge=" + JSON.stringify(integration) + ";",
  "   if(source.split(anchor).length===2){",
  "    source=source.replace(anchor,()=>bridge+anchor);",
  "    source=source.replace('<head>','<head><script src=\"scripts/fenrir-scene-v1.js\"></script>');",
@@ -49,5 +53,6 @@ for (const name of ['city-far.svg', 'city-mid.svg', 'city-near.svg']) {
  fs.copyFileSync(path.join(root, 'assets', 'fenrir', name), path.join(assetDir, name));
 }
 fs.writeFileSync(sceneOut, source);
+fs.writeFileSync(path.join(gameDir, 'scripts', 'render-quality.js'), renderQuality);
 fs.writeFileSync(hostPath, host);
 console.log('Fenrir scene, layer assets and runtime bridge synchronized.');
