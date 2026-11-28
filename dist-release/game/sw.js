@@ -2,7 +2,7 @@
 'use strict';
 
 const CACHE_PREFIX = 'cunjie-pwa-';
-const CACHE_NAME = CACHE_PREFIX + "68b90a19";
+const CACHE_NAME = CACHE_PREFIX + "5c7e7b67";
 const CORE_ASSETS = [
   "./",
   "./index.html",

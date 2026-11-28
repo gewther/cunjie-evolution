@@ -170,25 +170,35 @@ if(freeOldSetYoff&&typeof oc!=='undefined'){
   oc.style.transform=`translate3d(${jx.toFixed(1)}px,${jy.toFixed(1)}px,0) rotate(${rot.toFixed(2)}deg) scale(${zoom.toFixed(4)})`;
  };
 }
+function freeTrailsEnabled(){
+ const imm=(typeof window!=='undefined'&&window.__xlImmersionPrefs)||null;
+ if(imm&&(imm.reduceMotion||imm.lowEffects))return false;
+ if(typeof realmMood!=='undefined'&&realmMood&&(realmMood.reduceMotion||realmMood.lowEffects))return false;
+ return true;
+}
+function freeDrawAirTrails(sprSrc,x,yBottom,dw,dh,minVelo,alphaBase,dyBase,dySlope,stretchSlope){
+ if(!freeTrailsEnabled()||typeof paw_y_velo!=='number'||paw_y_velo<=minVelo)return;
+ const speedK=Math.min(1,(paw_y_velo-minVelo)/1500),oldAlpha=alpha;
+ for(let k=3;k>=1;k--){
+  alpha=xlModeFade*(alphaBase+.14*speedK)/k;
+  const dy=k*(dyBase+dySlope*speedK),stretch=1+stretchSlope*speedK;
+  sprite_scaled(sprSrc,x,yBottom-dy-dh*stretch,dw,dh*stretch);
+ }
+ alpha=oldAlpha;
+}
+window.__xlDrawAirTrails=freeDrawAirTrails;
 const freeOldFront=draw_front_paw;
 draw_front_paw=function(){
  if(hide_paws){freeOldFront();return;}
  if(!freeContact.grounded){
-  if(paw_y_velo>340){
+  if(paw_y_velo>340&&freeTrailsEnabled()){
    const s=paw.front_spr,uw=s[3],uh=s[4],n=s[6],dw=paw.width,dh=uh*(dw/uw),frame=paw_state;
    const fx=n?(s[5]?floor(frame/n):frame%n):(s[5]?0:frame),fy=n?(s[5]?frame%n:floor(frame/n)):(s[5]?frame:0);
    const fo=(typeof xlSkinGeo==='function'?xlSkinGeo():XL_GEOMETRY[xlActiveProfile.id]).frontOffsets;
    const hdKey=(typeof xlGetHdFrame==='function')?xlGetHdFrame(frame):((typeof xlHasHdAJ6==='function'&&xlHasHdAJ6()&&typeof realmAJ6Frames!=='undefined')?realmAJ6Frames.get(frame):null);
    const hdTex=hdKey?textures.get(hdKey):null;
    const sprSrc=hdKey?[hdKey,0,0,(hdTex&&hdTex.w)||960,(hdTex&&hdTex.h)||1536]:[s[0],s[1]+uxoff+fx*uw,s[2]+uyoff+fy*uh,uw,uh];
-   const speedK=Math.min(1,(paw_y_velo-340)/1500),yBottom=paw_y+(fo[frame]||0);
-   const oldAlpha=alpha;
-   for(let k=3;k>=1;k--){
-    alpha=xlModeFade*(.07+.14*speedK)/k;
-    const dy=k*(6+14*speedK),stretch=1+.038*speedK;
-    sprite_scaled(sprSrc,paw_x-dw/2-paw.offset,yBottom-dy-dh*stretch,dw,dh*stretch);
-   }
-   alpha=oldAlpha;
+   freeDrawAirTrails(sprSrc,paw_x-dw/2-paw.offset,paw_y+(fo[frame]||0),dw,dh,340,.07,6,14,.038);
   }
   freeOldFront();return;
  }

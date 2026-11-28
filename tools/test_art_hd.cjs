@@ -277,6 +277,54 @@ async function testRuntimeBehavior() {
  freeEnv.sandbox.draw();
  assert(freeEnv.occOps.includes('orig_pressure_suppressed'), 'Original pixelated pressure meter must be suppressed when vector bar draws');
  assert(freeEnv.occOps.includes('text:72%'), 'Crisp vector pressure bar must render numeric percentage');
+
+ // Test 5: Free Impact + HD Airborne Motion Trails respect reduceMotion/lowEffects and preserve paw.width/aspect ratio
+ const trailEnv = makeSandbox({ story: false, shoeSkin: 'aj5' });
+ const freeImpactCode = fs.readFileSync(path.join(root, 'src', 'free-impact-v6.js'), 'utf8');
+ trailEnv.sandbox.CunjieContactFeel = class { update() { return null; } punch() { return 0; } squash() { return 0; } };
+ trailEnv.sandbox.xlGfxPrefs = { shake: true };
+ trailEnv.sandbox.oc = { style: {} };
+ trailEnv.sandbox.update_paw = () => {};
+ trailEnv.sandbox.set_yoff = () => {};
+ trailEnv.sandbox.floor = Math.floor;
+ trailEnv.sandbox.uxoff = 0;
+ trailEnv.sandbox.uyoff = 0;
+ trailEnv.sandbox.paw_y_velo = 650;
+ trailEnv.sandbox.paw_state = 1;
+ trailEnv.sandbox.paw.width = 160;
+ trailEnv.sandbox.paw.front_spr = ['giant', 0, 0, 160, 256, 0, 3];
+ trailEnv.sandbox.draw_front_paw = () => trailEnv.drawCalls.push(['orig_front']);
+ trailEnv.sandbox.window.__cunjieArtOverhaulV1 = false;
+ trailEnv.sandbox.xlGetHdFrame = (...a) => trailEnv.sandbox.window.xlGetHdFrame(...a);
+ vm.runInNewContext(freeImpactCode + '\n' + code, trailEnv.sandbox);
+ trailEnv.sandbox.xlFreeContact.grounded = false;
+
+ // 5a: Legacy pre-load airborne draws 3 trails + orig_front with dw=160, dh=256
+ trailEnv.drawCalls.length = 0;
+ trailEnv.sandbox.draw_front_paw();
+ assert.equal(trailEnv.drawCalls.length, 4, 'Legacy airborne draw_front_paw must emit 3 trails + main foot');
+ assert.equal(trailEnv.drawCalls[0][3], 160, 'Trail width must equal paw.width');
+ assert(trailEnv.drawCalls[0][4] > 256 && trailEnv.drawCalls[0][4] < 270, 'Trail height must scale by 256/160 aspect ratio');
+
+ // 5b: HD airborne normal vs reduceMotion vs lowEffects
+ await new Promise(r => setImmediate(r));
+ await new Promise(r => setImmediate(r));
+ trailEnv.drawCalls.length = 0;
+ trailEnv.sandbox.draw_front_paw();
+ const hdAirDraws = trailEnv.drawCalls.filter(c => Array.isArray(c[0]) && c[0][0] === 'xl-art-hd-aj5-1');
+ assert.equal(hdAirDraws.length, 4, 'HD airborne Free Mode must draw 3 trails + 1 main foot');
+ assert.equal(hdAirDraws[3][3], 160);
+ assert.equal(hdAirDraws[3][4], 256);
+
+ trailEnv.drawCalls.length = 0;
+ trailEnv.sandbox.window.__xlImmersionPrefs = { reduceMotion: true, lowEffects: false };
+ trailEnv.sandbox.draw_front_paw();
+ assert.equal(trailEnv.drawCalls.filter(c => Array.isArray(c[0]) && c[0][0] === 'xl-art-hd-aj5-1').length, 1, 'reduceMotion must suppress HD trails while keeping main foot');
+
+ trailEnv.drawCalls.length = 0;
+ trailEnv.sandbox.window.__xlImmersionPrefs = { reduceMotion: false, lowEffects: true };
+ trailEnv.sandbox.draw_front_paw();
+ assert.equal(trailEnv.drawCalls.filter(c => Array.isArray(c[0]) && c[0][0] === 'xl-art-hd-aj5-1').length, 1, 'lowEffects must suppress HD trails while keeping main foot');
 }
 
 function testHostAndOffline() {

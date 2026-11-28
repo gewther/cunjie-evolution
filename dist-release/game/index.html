@@ -620,6 +620,7 @@ html,body,#app,#play,#mount,#canvasHost{overscroll-behavior:none}
  #play #quick *,
  #play #v56Menu *,
  #play #v56TouchDock *,
+ #play #speaker,
  #play #speaker *,
  #play #v59HitEvent,
  #play #quick #burstBtn{
@@ -627,6 +628,19 @@ html,body,#app,#play,#mount,#canvasHost{overscroll-behavior:none}
   transition:none!important;
   transform:none!important;
  }
+}
+:root[data-td-reduce-motion="1"] #play #hud *,
+:root[data-td-reduce-motion="1"] #play #quick *,
+:root[data-td-reduce-motion="1"] #play #v56Menu *,
+:root[data-td-reduce-motion="1"] #play #v56TouchDock *,
+:root[data-td-reduce-motion="1"] #play #speaker,
+:root[data-td-reduce-motion="1"] #play #speaker *,
+:root[data-td-reduce-motion="1"] #play #v59HitEvent,
+:root[data-td-reduce-motion="1"] #play #quick #burstBtn,
+:root[data-td-low-effects="1"] #play #v59HitEvent,
+:root[data-td-low-effects="1"] #play #quick #burstBtn{
+ animation:none!important;
+ transition:none!important;
 }
 </style></head><body><main id="app">
 <section id="home"><div class="veil"></div><article><small class="eyebrow">PROJECT 寸界 / EVOLUTION · CONTACT FEEL V2</small><h1>三重领域</h1><p>篮球鞋首幕：承重停顿 · 渐进施压 · 接地尘雾与分层声音。</p>

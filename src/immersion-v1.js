@@ -569,8 +569,8 @@
      occ.fillRect(Math.max(0,gx-rad),Math.max(0,gy-rad*0.75),rad*2,rad*1.1);
     }
 
-    // 1b. Contracting High-Tech Surveillance Target Reticle (airborne descent only)
-    if(dreadMode!=='off'&&isAirborneDescending(0.16,40)){
+    // 1b. Contracting High-Tech Surveillance Target Reticle (airborne descent only; honors reduceMotion)
+    if(dreadMode!=='off'&&!isReducedMotion()&&isAirborneDescending(0.16,40)){
      const footW=(paw&&paw.width?paw.width:96);
      const rw=Math.max(footW*0.55,footW*(1.28-0.52*prox));
      const halfW=rw*0.5,rh=Math.max(7,rw*0.15),br=Math.max(5,rw*0.14);
@@ -645,7 +645,7 @@
    }
 
    // 4. Diegetic Overdrive-Ready peripheral pulse for Fenrir (thrill >= 85%)
-   if(isFenrir&&window.xlFenrirState&&!window.xlFenrirState.overdrive&&window.xlFenrirState.thrill>=85&&!isLowEffects()){
+   if(isFenrir&&window.xlFenrirState&&!window.xlFenrirState.overdrive&&window.xlFenrirState.thrill>=85&&!isLowEffects()&&!isReducedMotion()){
     const pulse=0.5+0.5*Math.sin(ambClock*7.5);
     const a=(0.08+0.09*pulse);
     const lg=occ.createLinearGradient(0,0,28,0);

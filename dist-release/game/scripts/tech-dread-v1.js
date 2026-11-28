@@ -269,12 +269,16 @@
  let overlay=null,telemetryEl=null,modeBtn=null,styleInjected=false;
  function syncDomAppearance(){
   if(typeof document==='undefined')return;
-  if(document.documentElement)document.documentElement.dataset.tdDreadMode=mode;
+  const prefs=readHostPrefs();
+  if(document.documentElement){
+   document.documentElement.dataset.tdDreadMode=mode;
+   document.documentElement.dataset.tdReduceMotion=prefs.reduceMotion?'1':'0';
+   document.documentElement.dataset.tdLowEffects=prefs.lowEffects?'1':'0';
+  }
   const home=document.getElementById('home');
   if(home&&home.classList)home.classList.toggle('td-home-active',mode!=='off');
   if(modeBtn)modeBtn.textContent='压迫氛围：'+MODE_LABELS[mode];
   if(overlay){
-   const prefs=readHostPrefs();
    const effDread=prefs.reduceMotion?0:lastDread;
    if(overlay.style&&typeof overlay.style.setProperty==='function'){
     overlay.style.setProperty('--td-dread',effDread.toFixed(3));

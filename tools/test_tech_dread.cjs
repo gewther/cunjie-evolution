@@ -19,6 +19,7 @@ function testFilesAndPaths() {
 
  const idxHtml = fs.readFileSync(path.join(releaseGame, 'index.html'), 'utf8');
  assert(idxHtml.includes('src="scripts/tech-dread-v1.js"'), 'index.html missing scripts/tech-dread-v1.js');
+ assert(idxHtml.includes(':root[data-td-reduce-motion="1"]') && idxHtml.includes(':root[data-td-low-effects="1"]'), 'index.html missing game-pref HUD animation disable rules');
  assert(!/(?<![.])\/assets\//.test(idxHtml), 'Found forbidden root-absolute /assets/ path in index.html');
 
  for (const bundle of ['touch-v1-free.js', 'touch-v1-impact.js']) {
@@ -187,10 +188,13 @@ function testHostTerminalBehavior() {
  assert.equal(created.get('tdv1Overlay').classList.contains('td-alert'), true);
  assert.equal(created.get('tdv1Telemetry').classList.contains('td-tel-alert'), true);
 
- // reduceMotion must freeze HUD --td-dread vignette and apply td-rm
- store.set('cunjie-stomp-impact-v1', JSON.stringify({ version: 2, prefs: { sound: true, volume: 0.5, reduceMotion: true, lowEffects: false } }));
+ // reduceMotion must freeze HUD --td-dread vignette, apply td-rm, and sync root dataset flags for HUD CSS animations
+ store.set('cunjie-stomp-impact-v1', JSON.stringify({ version: 2, prefs: { sound: true, volume: 0.5, reduceMotion: true, lowEffects: true } }));
  api.tick();
  assert.equal(created.get('tdv1Overlay').classList.contains('td-rm'), true);
+ assert.equal(created.get('tdv1Overlay').classList.contains('td-lowfx'), true);
+ assert.equal(docElem.dataset.tdReduceMotion, '1');
+ assert.equal(docElem.dataset.tdLowEffects, '1');
  assert.equal(created.get('tdv1Overlay').style.getPropertyValue('--td-dread'), '0.000');
 
  assert.equal(api.cycleMode(), 'off');
@@ -287,18 +291,24 @@ function testImmersionDreadCues() {
  assert(!occCalls.some(c => c[0] === 'text' && String(c[1]).startsWith('ALT ')), 'Rising airborne foot must NOT draw targeting reticle');
  sandbox.paw_y_velo = 560;
 
- // reduceMotion must disable canvas vignette and silence ambience vacuum
+ // reduceMotion must disable reticle, canvas vignette, Fenrir overdrive peripheral pulse, and silence ambience vacuum
  occCalls.length = 0;
  masterGains[0].values.length = 0;
  gains[3].values.length = 0;
  droneFreqs.length = 0;
+ sandbox.fenrirCity = true;
+ sandbox.window.xlFenrirState = { overdrive: false, thrill: 92 };
  sandbox.realmMood.reduceMotion = true;
  sandbox.update_paw();
  sandbox.draw();
+ assert(!occCalls.some(c => c[0] === 'text' && String(c[1]).startsWith('ALT ')), 'reduceMotion must disable targeting reticle');
  assert(!occCalls.some(c => c[0] === 'fillRect' && c[3] === 400 && c[4] === 240), 'reduceMotion must disable canvas dread vignette');
+ assert(!occCalls.some(c => c[0] === 'fillRect' && c[3] === 28 && c[4] === 240), 'reduceMotion must disable Fenrir overdrive peripheral pulse');
  assert(masterGains[0].values.at(-1) > 0.4, 'reduceMotion must disable sudden-silence vacuum ducking');
  assert.notEqual(droneFreqs.at(-1), 44, 'reduceMotion must disable forced 44 Hz vacuum drone');
  sandbox.realmMood.reduceMotion = false;
+ sandbox.fenrirCity = false;
+ sandbox.window.xlFenrirState = null;
 
  // lowEffects must disable canvas vignette AND sudden-silence ambience vacuum / 44 Hz drone
  occCalls.length = 0;
@@ -410,7 +420,36 @@ function testImmersionDreadCues() {
  punchNow = 0.85;
  sandbox.update_paw();
  assert.equal(vibeCalls.length, 0, 'lowEffects must suppress navigator.vibrate');
- sandbox.realmMood.lowEffects = false;
+ // Fenrir overdrive peripheral pulse: draws 28px edge bars normally, disabled by reduceMotion
+ const fnOccCalls = [];
+ const fnSandbox = {
+  Math, Number, Array, Object, Set, Map, Date, JSON,
+  setInterval: () => 1, clearInterval: () => {},
+  performance: { now: () => 1000 },
+  clamp: (v, a, b) => Math.max(a, Math.min(b, v)),
+  active: true, pause: false, tr: false, slow: false, hide_paws: false,
+  delta: 0.016, w: 400, h: 240, sc: 2, floor_y: 228, paw_x: 200, paw_y: 120, paw_y_velo: 0, paw_state: 0, pressure: 0,
+  paw: { width: 100 }, fenrirCity: true,
+  realmMood: { reduceMotion: false, lowEffects: false },
+  update_paw: () => {}, update_bugs: () => {}, set_yoff: () => {}, draw: () => {},
+  oc: { style: {} },
+  occ: {
+   save: () => {}, restore: () => {}, setTransform: () => {},
+   fillRect: (...a) => fnOccCalls.push(a),
+   createRadialGradient: () => ({ addColorStop: () => {} }),
+   createLinearGradient: () => ({ addColorStop: () => {} }),
+  },
+  window: { xlFenrirState: { overdrive: false, thrill: 92 }, parent: { localStorage: { getItem: () => 'standard' } }, addEventListener: () => {} },
+ };
+ fnSandbox.window.window = fnSandbox.window;
+ fnSandbox.globalThis = fnSandbox;
+ vm.runInNewContext(code, fnSandbox);
+ fnSandbox.draw();
+ assert.equal(fnOccCalls.filter(c => c[2] === 28 && c[3] === 240).length, 2, 'Overdrive-ready pulse should draw left/right 28px bars normally');
+ fnOccCalls.length = 0;
+ fnSandbox.realmMood.reduceMotion = true;
+ fnSandbox.draw();
+ assert.equal(fnOccCalls.filter(c => c[2] === 28 && c[3] === 240).length, 0, 'reduceMotion must disable Fenrir overdrive-ready peripheral pulse');
 }
 
 function main() {

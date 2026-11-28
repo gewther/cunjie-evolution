@@ -173,6 +173,13 @@
  }
 
  // --- 1. HD Front Paw Rendering across Act I (airborne/fallback), Act II, Act III & Free Mode ---
+ function artTrailsAllowed(){
+  if(typeof realmPrefs!=='undefined'&&realmPrefs&&realmPrefs.impactFx===false)return false;
+  if(typeof realmMood!=='undefined'&&realmMood&&(realmMood.reduceMotion||realmMood.lowEffects))return false;
+  const imm=window.__xlImmersionPrefs||null;
+  if(imm&&(imm.reduceMotion||imm.lowEffects))return false;
+  return true;
+ }
  function drawHdFrameWithTrails(hdKey,frame,yOff,includeTrails){
   const s=paw.front_spr,uw=s[3],uh=s[4],dw=paw.width,dh=uh*(dw/uw);
   const fo=(typeof xlSkinGeo==='function'?xlSkinGeo():(XL_SKIN_GEO[typeof xlSkinId==='function'?xlSkinId():'aj5']||XL_GEOMETRY[xlActiveProfile.id])).frontOffsets;
@@ -180,15 +187,19 @@
   const sprSrc=[hdKey,0,0,(tx&&tx.w)||480,(tx&&tx.h)||768];
   const yBottom=paw_y+yOff+(fo[frame]||0);
   const fade=typeof xlModeFade==='number'?xlModeFade:1;
-  if(includeTrails&&typeof paw_y_velo==='number'&&paw_y_velo>330){
-   const speedK=Math.min(1,(paw_y_velo-330)/1500);
-   const oldAlpha=alpha;
-   for(let k=3;k>=1;k--){
-    alpha=fade*(.07+.14*speedK)/k;
-    const dy=k*(7+14*speedK),stretch=1+.038*speedK;
-    sprite_scaled(sprSrc,paw_x-dw/2-paw.offset,yBottom-dy-dh*stretch,dw,dh*stretch);
+  if(includeTrails&&artTrailsAllowed()){
+   if(typeof window.__xlDrawAirTrails==='function'){
+    window.__xlDrawAirTrails(sprSrc,paw_x-dw/2-paw.offset,yBottom,dw,dh,330,.07,7,14,.038);
+   }else if(typeof paw_y_velo==='number'&&paw_y_velo>330){
+    const speedK=Math.min(1,(paw_y_velo-330)/1500);
+    const oldAlpha=alpha;
+    for(let k=3;k>=1;k--){
+     alpha=fade*(.07+.14*speedK)/k;
+     const dy=k*(7+14*speedK),stretch=1+.038*speedK;
+     sprite_scaled(sprSrc,paw_x-dw/2-paw.offset,yBottom-dy-dh*stretch,dw,dh*stretch);
+    }
+    alpha=oldAlpha;
    }
-   alpha=oldAlpha;
   }
   alpha=fade;
   sprite_scaled(sprSrc,paw_x-dw/2-paw.offset,yBottom-dh,dw,dh);
@@ -258,7 +269,7 @@
      realmLastSprite=g;
      const tx=textures.get(hdKey);
      const tw=(tx&&tx.w)||480,th=(tx&&tx.h)||768;
-     if(paw_state!==3&&impactOn&&!(typeof realmMood!=='undefined'&&realmMood.lowEffects)&&typeof paw_y_velo==='number'&&paw_y_velo>320){
+     if(paw_state!==3&&artTrailsAllowed()&&typeof paw_y_velo==='number'&&paw_y_velo>320){
       const speedK=Math.min(1,(paw_y_velo-320)/1500),oldA=alpha;
       for(let k=3;k>=1;k--){
        alpha=fade*(.07+.15*speedK)/k;
@@ -305,7 +316,7 @@
    const frame=paw_state;
    const hdKey=window.xlGetHdFrame(frame);
    if(!hdKey)return artOrigFront();
-   drawHdFrameWithTrails(hdKey,frame,0,true);
+   drawHdFrameWithTrails(hdKey,frame,0,artTrailsAllowed());
   };
  }
 
